@@ -22,14 +22,6 @@ app.set("trust proxy", 1);
       serveStatic(app);
     }
 
-    // Error handling middleware
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      console.error('Server error:', err);
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      res.status(status).json({ message });
-    });
-
     // Request logging
     app.use((req, res, next) => {
       const start = Date.now();
@@ -67,6 +59,15 @@ app.set("trust proxy", 1);
 
       next();
     });
+
+    // Error handling middleware
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      console.error('Server error:', err);
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      res.status(status).json({ message });
+    });
+
 
     const port = 5000;
     server.listen({

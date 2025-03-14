@@ -47,7 +47,9 @@ export function setupAuth(app: Express) {
     store: new PostgresSessionStore({
       pool,
       createTableIfMissing: true,
-      tableName: 'session'
+      tableName: 'session',
+      pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+      errorLog: console.error // Log session store errors
     }),
     name: 'tour-tracker.sid'
   };

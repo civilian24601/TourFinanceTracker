@@ -105,8 +105,9 @@ export function ExpenseForm() {
               <FormLabel>Amount</FormLabel>
               <FormControl>
                 <Input
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.,]?[0-9]*"
                   placeholder="0.00"
                   {...field}
                 />

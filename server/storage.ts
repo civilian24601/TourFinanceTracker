@@ -34,45 +34,104 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      throw error;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    try {
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      return user;
+    } catch (error) {
+      console.error('Error fetching user by username:', error);
+      throw error;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
+    try {
+      const [user] = await db.insert(users).values(insertUser).returning();
+      return user;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
   }
 
   async createTour(tour: InsertTour & { userId: number }): Promise<Tour> {
-    const [newTour] = await db.insert(tours).values(tour).returning();
-    return newTour;
+    try {
+      const [newTour] = await db.insert(tours).values({
+        name: tour.name,
+        userId: tour.userId,
+        startDate: new Date(tour.startDate),
+        endDate: new Date(tour.endDate),
+        budget: tour.budget
+      }).returning();
+      return newTour;
+    } catch (error) {
+      console.error('Error creating tour:', error);
+      throw error;
+    }
   }
 
   async getToursByUser(userId: number): Promise<Tour[]> {
-    return db.select().from(tours).where(eq(tours.userId, userId));
+    try {
+      return await db.select().from(tours).where(eq(tours.userId, userId));
+    } catch (error) {
+      console.error('Error fetching tours:', error);
+      throw error;
+    }
   }
 
   async getTour(id: number): Promise<Tour | undefined> {
-    const [tour] = await db.select().from(tours).where(eq(tours.id, id));
-    return tour;
+    try {
+      const [tour] = await db.select().from(tours).where(eq(tours.id, id));
+      return tour;
+    } catch (error) {
+      console.error('Error fetching tour:', error);
+      throw error;
+    }
   }
 
   async createExpense(expense: InsertExpense & { userId: number }): Promise<Expense> {
-    const [newExpense] = await db.insert(expenses).values(expense).returning();
-    return newExpense;
+    try {
+      const [newExpense] = await db.insert(expenses).values({
+        userId: expense.userId,
+        tourId: expense.tourId,
+        amount: expense.amount,
+        category: expense.category,
+        description: expense.description,
+        date: new Date(expense.date),
+        offlineId: expense.offlineId
+      }).returning();
+      return newExpense;
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      throw error;
+    }
   }
 
   async getExpensesByTour(tourId: number): Promise<Expense[]> {
-    return db.select().from(expenses).where(eq(expenses.tourId, tourId));
+    try {
+      return await db.select().from(expenses).where(eq(expenses.tourId, tourId));
+    } catch (error) {
+      console.error('Error fetching expenses by tour:', error);
+      throw error;
+    }
   }
 
   async getExpensesByUser(userId: number): Promise<Expense[]> {
-    return db.select().from(expenses).where(eq(expenses.userId, userId));
+    try {
+      return await db.select().from(expenses).where(eq(expenses.userId, userId));
+    } catch (error) {
+      console.error('Error fetching expenses by user:', error);
+      throw error;
+    }
   }
 }
 

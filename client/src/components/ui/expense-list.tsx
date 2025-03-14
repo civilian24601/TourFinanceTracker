@@ -22,9 +22,13 @@ function formatAmount(amount: string | number): string {
   }
 }
 
-export function ExpenseList() {
+interface ExpenseListProps {
+  tourId?: number;
+}
+
+export function ExpenseList({ tourId }: ExpenseListProps) {
   const { data: expenses, isLoading } = useQuery<Expense[]>({
-    queryKey: ["/api/expenses"],
+    queryKey: ["/api/expenses", { tourId }],
   });
 
   if (isLoading) {

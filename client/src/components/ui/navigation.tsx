@@ -6,7 +6,7 @@ import {
   Home,
   LogOut,
   PlusCircle,
-  Settings,
+  MapPin,
 } from "lucide-react";
 
 export function Navigation() {
@@ -23,6 +23,12 @@ export function Navigation() {
             <a className="flex items-center space-x-1">
               <Home className="h-4 w-4" />
               <span>Dashboard</span>
+            </a>
+          </Link>
+          <Link href="/tours">
+            <a className="flex items-center space-x-1">
+              <MapPin className="h-4 w-4" />
+              <span>Tours</span>
             </a>
           </Link>
           <Link href="/expense">

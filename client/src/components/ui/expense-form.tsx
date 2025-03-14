@@ -33,21 +33,17 @@ export function ExpenseForm() {
   const form = useForm<InsertExpense>({
     resolver: zodResolver(insertExpenseSchema),
     defaultValues: {
-      amount: undefined,
+      amount: "",
       category: "other",
       description: "",
       date: new Date().toISOString(),
-      tourId: undefined,
+      tourId: null,
     },
   });
 
   const createExpense = useMutation({
     mutationFn: async (data: InsertExpense) => {
-      const res = await apiRequest("POST", "/api/expenses", {
-        ...data,
-        amount: Number(data.amount),
-        tourId: data.tourId ? Number(data.tourId) : undefined,
-      });
+      const res = await apiRequest("POST", "/api/expenses", data);
       return res.json();
     },
     onSuccess: () => {
@@ -80,8 +76,8 @@ export function ExpenseForm() {
             <FormItem>
               <FormLabel>Tour (Optional)</FormLabel>
               <Select
-                onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
-                value={field.value?.toString()}
+                onValueChange={(value) => field.onChange(value ? Number(value) : null)}
+                value={field.value?.toString() ?? ""}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -113,11 +109,6 @@ export function ExpenseForm() {
                   step="0.01"
                   placeholder="0.00"
                   {...field}
-                  value={field.value ?? ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    field.onChange(value === '' ? undefined : Number(value));
-                  }}
                 />
               </FormControl>
               <FormMessage />

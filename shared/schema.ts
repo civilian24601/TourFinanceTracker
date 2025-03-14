@@ -46,14 +46,20 @@ export const insertTourSchema = createInsertSchema(tours)
     budget: z.number().min(0, "Budget must be positive"),
   });
 
-export const insertExpenseSchema = createInsertSchema(expenses).pick({
-  amount: true,
-  category: true,
-  description: true,
-  date: true,
-  tourId: true,
-  offlineId: true,
-});
+export const insertExpenseSchema = createInsertSchema(expenses)
+  .pick({
+    amount: true,
+    category: true,
+    description: true,
+    date: true,
+    tourId: true,
+    offlineId: true,
+  })
+  .extend({
+    amount: z.string().transform((val) => Number(val)),
+    date: z.string(),
+    tourId: z.number().nullable(),
+  });
 
 export const categories = [
   "travel",

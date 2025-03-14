@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertExpenseSchema, type InsertExpense, categories } from "@shared/schema";
+import { insertExpenseSchema, type InsertExpense, categories, type Tour } from "@shared/schema";
 import { Button } from "./button";
 import {
   Form,
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./select";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,13 +26,18 @@ export function ExpenseForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const { data: tours } = useQuery<Tour[]>({
+    queryKey: ["/api/tours"],
+  });
+
   const form = useForm<InsertExpense>({
     resolver: zodResolver(insertExpenseSchema),
     defaultValues: {
-      amount: undefined, // Remove default 0 to allow proper validation
+      amount: undefined,
       category: "other",
       description: "",
       date: new Date().toISOString(),
+      tourId: undefined,
     },
   });
 
@@ -40,7 +45,8 @@ export function ExpenseForm() {
     mutationFn: async (data: InsertExpense) => {
       const res = await apiRequest("POST", "/api/expenses", {
         ...data,
-        amount: Number(data.amount), // Ensure amount is sent as a number
+        amount: Number(data.amount),
+        tourId: data.tourId ? Number(data.tourId) : undefined,
       });
       return res.json();
     },
@@ -69,6 +75,34 @@ export function ExpenseForm() {
       >
         <FormField
           control={form.control}
+          name="tourId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tour (Optional)</FormLabel>
+              <Select
+                onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                value={field.value?.toString()}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a tour" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {tours?.map((tour) => (
+                    <SelectItem key={tour.id} value={tour.id.toString()}>
+                      {tour.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="amount"
           render={({ field }) => (
             <FormItem>
@@ -79,7 +113,7 @@ export function ExpenseForm() {
                   step="0.01"
                   placeholder="0.00"
                   {...field}
-                  value={field.value ?? ''} // Handle undefined value
+                  value={field.value ?? ''}
                   onChange={(e) => {
                     const value = e.target.value;
                     field.onChange(value === '' ? undefined : Number(value));

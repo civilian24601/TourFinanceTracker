@@ -4,8 +4,6 @@ import { setupVite, serveStatic, log } from "./vite";
 import { db } from "./db";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 // Add error handling middleware early
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -15,6 +13,11 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json({ message });
 });
 
+// Essential middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Request logging
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

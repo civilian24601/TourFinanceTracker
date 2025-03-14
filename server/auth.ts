@@ -35,9 +35,13 @@ export function setupAuth(app: Express) {
     saveUninitialized: true,
     cookie: {
       secure: false, // Set to false for development
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax',
+      path: '/',
+      httpOnly: true
     },
     store: storage.sessionStore,
+    name: 'tour-tracker.sid'
   };
 
   app.set("trust proxy", 1);
@@ -55,39 +59,56 @@ export function setupAuth(app: Express) {
           return done(null, user);
         }
       } catch (error) {
+        console.error('Login error:', error);
         return done(error);
       }
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user, done) => {
+    console.log('Serializing user:', user.id);
+    done(null, user.id);
+  });
+
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
+      if (!user) {
+        console.log('User not found during deserialization:', id);
+        return done(null, false);
+      }
+      console.log('Deserialized user:', id);
       done(null, user);
     } catch (error) {
+      console.error('Deserialization error:', error);
       done(error);
     }
   });
 
   app.post("/api/register", async (req, res, next) => {
-    const existingUser = await storage.getUserByUsername(req.body.username);
-    if (existingUser) {
-      return res.status(400).send("Username already exists");
+    try {
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).send("Username already exists");
+      }
+
+      const user = await storage.createUser({
+        ...req.body,
+        password: await hashPassword(req.body.password),
+      });
+
+      req.login(user, (err) => {
+        if (err) return next(err);
+        res.status(201).json(user);
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      next(error);
     }
-
-    const user = await storage.createUser({
-      ...req.body,
-      password: await hashPassword(req.body.password),
-    });
-
-    req.login(user, (err) => {
-      if (err) return next(err);
-      res.status(201).json(user);
-    });
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    console.log('Login successful:', req.user?.id);
     res.status(200).json(req.user);
   });
 
@@ -99,7 +120,11 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.isAuthenticated()) {
+      console.log('Unauthorized access attempt');
+      return res.sendStatus(401);
+    }
+    console.log('User authenticated:', req.user?.id);
     res.json(req.user);
   });
 }

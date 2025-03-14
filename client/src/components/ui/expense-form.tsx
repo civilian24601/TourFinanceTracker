@@ -25,11 +25,11 @@ import { useToast } from "@/hooks/use-toast";
 export function ExpenseForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const form = useForm<InsertExpense>({
     resolver: zodResolver(insertExpenseSchema),
     defaultValues: {
-      amount: 0,
+      amount: undefined, // Remove default 0 to allow proper validation
       category: "other",
       description: "",
       date: new Date().toISOString(),
@@ -38,7 +38,10 @@ export function ExpenseForm() {
 
   const createExpense = useMutation({
     mutationFn: async (data: InsertExpense) => {
-      const res = await apiRequest("POST", "/api/expenses", data);
+      const res = await apiRequest("POST", "/api/expenses", {
+        ...data,
+        amount: Number(data.amount), // Ensure amount is sent as a number
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -76,7 +79,11 @@ export function ExpenseForm() {
                   step="0.01"
                   placeholder="0.00"
                   {...field}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                  value={field.value ?? ''} // Handle undefined value
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    field.onChange(value === '' ? undefined : Number(value));
+                  }}
                 />
               </FormControl>
               <FormMessage />

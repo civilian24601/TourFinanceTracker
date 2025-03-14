@@ -23,9 +23,10 @@ export function FinancialInsights() {
 
   // Refetch insights when expenses change
   useEffect(() => {
-    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
-      const expensesQuery = queryClient.getQueryData(["/api/expenses"]);
-      if (expensesQuery) {
+    // Instead of subscribing to all cache changes, we'll only watch expenses
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (event?.query.queryKey[0] === '/api/expenses' && event.type === 'updated') {
+        // Only invalidate insights if expenses were actually updated
         queryClient.invalidateQueries({ queryKey: ["/api/insights"] });
       }
     });

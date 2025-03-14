@@ -6,6 +6,8 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
 declare global {
   namespace Express {
@@ -29,6 +31,8 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  const PostgresSessionStore = connectPg(session);
+
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET!,
     resave: false,
@@ -40,7 +44,11 @@ export function setupAuth(app: Express) {
       path: '/',
       httpOnly: true
     },
-    store: storage.sessionStore,
+    store: new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
+      tableName: 'session'
+    }),
     name: 'tour-tracker.sid'
   };
 
@@ -53,8 +61,10 @@ export function setupAuth(app: Express) {
       try {
         const user = await storage.getUserByUsername(username);
         if (!user || !(await comparePasswords(password, user.password))) {
+          console.error('Login failed:', username);
           return done(null, false);
         } else {
+          console.log('Login successful:', user.id);
           return done(null, user);
         }
       } catch (error) {

@@ -11,3 +11,24 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Calendar styles */
+.rdp {
+  @apply text-foreground;
+}
+
+.rdp-day {
+  @apply h-9 w-9 rounded-lg text-center text-sm font-normal transition-colors hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground;
+}
+
+.rdp-day_selected {
+  @apply bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground;
+}
+
+.rdp-day_today {
+  @apply bg-muted text-foreground;
+}
+
+.rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+  @apply bg-muted;
+}

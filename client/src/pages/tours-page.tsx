@@ -1,5 +1,6 @@
 import { Navigation } from "@/components/ui/navigation";
 import { TourList } from "@/components/ui/tour-list";
+import { TourCalendar } from "@/components/ui/tour-calendar";
 import { TourForm } from "@/components/ui/tour-form";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -36,7 +37,13 @@ export default function ToursPage() {
             </DialogContent>
           </Dialog>
         </div>
-        <TourList />
+
+        <TourCalendar />
+
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">All Tours</h2>
+          <TourList />
+        </div>
       </main>
     </div>
   );

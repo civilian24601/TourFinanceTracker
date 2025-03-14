@@ -31,8 +31,8 @@ async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET!,
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
     cookie: {
       secure: false, // Set to false for development
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -44,7 +44,6 @@ export function setupAuth(app: Express) {
     name: 'tour-tracker.sid'
   };
 
-  app.set("trust proxy", 1);
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());

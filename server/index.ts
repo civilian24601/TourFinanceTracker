@@ -5,17 +5,20 @@ import { db } from "./db";
 
 const app = express();
 
-// Add error handling middleware early
+// Essential middleware - Move before error handling
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Setup session and auth before routing and error handling
+app.set("trust proxy", 1);
+
+// Error handling middleware
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Server error:', err);
   const status = err.status || err.statusCode || 500;
   const message = err.message || "Internal Server Error";
   res.status(status).json({ message });
 });
-
-// Essential middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 // Request logging
 app.use((req, res, next) => {

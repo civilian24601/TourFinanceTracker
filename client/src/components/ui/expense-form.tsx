@@ -33,17 +33,21 @@ export function ExpenseForm() {
   const form = useForm<InsertExpense>({
     resolver: zodResolver(insertExpenseSchema),
     defaultValues: {
-      amount: "",
+      amount: undefined,
       category: "other",
       description: "",
       date: new Date().toISOString(),
       tourId: null,
+      offlineId: undefined
     },
   });
 
   const createExpense = useMutation({
     mutationFn: async (data: InsertExpense) => {
-      const res = await apiRequest("POST", "/api/expenses", data);
+      const res = await apiRequest("POST", "/api/expenses", {
+        ...data,
+        amount: Number(data.amount), // Ensure number conversion
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -105,11 +109,15 @@ export function ExpenseForm() {
               <FormLabel>Amount</FormLabel>
               <FormControl>
                 <Input
-                  type="text"
-                  inputMode="decimal"
-                  pattern="[0-9]*[.,]?[0-9]*"
+                  type="number"
+                  step="0.01"
+                  min="0"
                   placeholder="0.00"
                   {...field}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    field.onChange(value === '' ? undefined : Number(value));
+                  }}
                 />
               </FormControl>
               <FormMessage />

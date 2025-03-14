@@ -56,7 +56,13 @@ export const insertExpenseSchema = createInsertSchema(expenses)
     offlineId: true,
   })
   .extend({
-    amount: z.string().transform((val) => Number(val)),
+    amount: z.number().min(0, "Amount must be positive").or(
+      z.string().transform((val) => {
+        const num = Number(val);
+        if (isNaN(num)) throw new Error("Invalid amount");
+        return num;
+      })
+    ),
     date: z.string(),
     tourId: z.number().nullable(),
   });

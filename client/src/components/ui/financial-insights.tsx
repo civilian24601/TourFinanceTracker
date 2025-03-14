@@ -81,7 +81,7 @@ export function FinancialInsights() {
           <h3 className="font-medium mb-2">Next Month Forecast</h3>
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold">
-              ${insights.forecast.nextMonthExpense.toFixed(2)}
+              ${Number(insights.forecast.nextMonthExpense).toFixed(2)}
             </span>
             <span className="text-sm text-muted-foreground">
               {Math.round(insights.forecast.confidence * 100)}% confidence

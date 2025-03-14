@@ -39,7 +39,7 @@ export function ExpenseList() {
             <TableCell className="capitalize">{expense.category}</TableCell>
             <TableCell>{expense.description}</TableCell>
             <TableCell className="text-right">
-              ${expense.amount.toFixed(2)}
+              ${Number(expense.amount).toFixed(2)}
             </TableCell>
           </TableRow>
         ))}

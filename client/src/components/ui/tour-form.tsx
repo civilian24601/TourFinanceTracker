@@ -23,8 +23,8 @@ export function TourForm({ onSuccess }: { onSuccess?: () => void }) {
     resolver: zodResolver(insertTourSchema),
     defaultValues: {
       name: "",
-      startDate: new Date().toISOString().split("T")[0],
-      endDate: new Date().toISOString().split("T")[0],
+      startDate: undefined,
+      endDate: undefined,
       budget: undefined,
     },
   });
@@ -34,6 +34,8 @@ export function TourForm({ onSuccess }: { onSuccess?: () => void }) {
       const res = await apiRequest("POST", "/api/tours", {
         ...data,
         budget: Number(data.budget),
+        startDate: new Date(data.startDate as string).toISOString(),
+        endDate: new Date(data.endDate as string).toISOString(),
       });
       return res.json();
     },
@@ -78,11 +80,16 @@ export function TourForm({ onSuccess }: { onSuccess?: () => void }) {
         <FormField
           control={form.control}
           name="startDate"
-          render={({ field }) => (
+          render={({ field: { value, onChange, ...field } }) => (
             <FormItem>
               <FormLabel>Start Date</FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <Input 
+                  type="date" 
+                  {...field}
+                  value={value ? new Date(value).toISOString().split('T')[0] : ''}
+                  onChange={(e) => onChange(e.target.value)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -92,11 +99,16 @@ export function TourForm({ onSuccess }: { onSuccess?: () => void }) {
         <FormField
           control={form.control}
           name="endDate"
-          render={({ field }) => (
+          render={({ field: { value, onChange, ...field } }) => (
             <FormItem>
               <FormLabel>End Date</FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <Input 
+                  type="date" 
+                  {...field}
+                  value={value ? new Date(value).toISOString().split('T')[0] : ''}
+                  onChange={(e) => onChange(e.target.value)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

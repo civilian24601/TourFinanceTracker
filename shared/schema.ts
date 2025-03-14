@@ -33,12 +33,18 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
-export const insertTourSchema = createInsertSchema(tours).pick({
-  name: true,
-  startDate: true,
-  endDate: true,
-  budget: true,
-});
+export const insertTourSchema = createInsertSchema(tours)
+  .pick({
+    name: true,
+    startDate: true,
+    endDate: true,
+    budget: true,
+  })
+  .extend({
+    startDate: z.string(),
+    endDate: z.string(),
+    budget: z.number().min(0, "Budget must be positive"),
+  });
 
 export const insertExpenseSchema = createInsertSchema(expenses).pick({
   amount: true,

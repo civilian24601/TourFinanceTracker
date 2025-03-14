@@ -29,15 +29,17 @@ function calculateTrends(expenses: Expense[]): ExpenseTrend[] {
 }
 
 export function ExpenseTrends({ tourId }: { tourId?: number }) {
-  const { data: expenses, isLoading } = useQuery<Expense[]>({
+  const { data: expenses, isLoading: expensesLoading } = useQuery<Expense[]>({
     queryKey: ["/api/expenses", { tourId }],
     enabled: !!tourId,
   });
 
-  const { data: insights } = useQuery<{ trends: string[] }>({
+  const { data: insights, isLoading: insightsLoading } = useQuery<{ trends: string[] }>({
     queryKey: ["/api/insights", { tourId }],
     enabled: !!tourId,
   });
+
+  const isLoading = expensesLoading || insightsLoading;
 
   if (isLoading) {
     return <Skeleton className="h-[400px]" />;

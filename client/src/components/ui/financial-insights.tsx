@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
 import { Skeleton } from "./skeleton";
 import { TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
+import { useEffect } from "react";
 
 interface FinancialInsight {
   summary: string;
@@ -14,12 +15,41 @@ interface FinancialInsight {
 }
 
 export function FinancialInsights() {
-  const { data: insights, isLoading } = useQuery<FinancialInsight>({
+  const queryClient = useQueryClient();
+  const { data: insights, isLoading, error } = useQuery<FinancialInsight>({
     queryKey: ["/api/insights"],
+    staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
   });
+
+  // Refetch insights when expenses change
+  useEffect(() => {
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      const expensesQuery = queryClient.getQueryData(["/api/expenses"]);
+      if (expensesQuery) {
+        queryClient.invalidateQueries({ queryKey: ["/api/insights"] });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [queryClient]);
 
   if (isLoading) {
     return <Skeleton className="h-48" />;
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Financial Insights</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-destructive">Failed to load insights</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!insights) {
@@ -29,7 +59,7 @@ export function FinancialInsights() {
           <CardTitle>Financial Insights</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">No insights available</p>
+          <p className="text-muted-foreground">No insights available yet. Add some expenses to get started!</p>
         </CardContent>
       </Card>
     );

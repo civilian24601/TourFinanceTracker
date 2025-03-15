@@ -86,14 +86,39 @@ export async function generateFinancialInsights(
             Analyze expense patterns and provide advanced insights for touring musicians.
             Focus on practical, actionable advice for budget management.
             Consider seasonal patterns, industry trends, and risk factors.
-            Respond with a detailed JSON object containing:
-            - summary: A brief overview of the financial situation
-            - trends: Array of identified spending patterns
-            - recommendations: Array of actionable suggestions
-            - forecast: Object with detailed expense predictions and category breakdown
-            - riskAnalysis: Assessment of financial risks
-            - seasonalPatterns: Identified seasonal spending patterns
-            - budgetOptimization: Specific suggestions for cost reduction`,
+
+            Provide a detailed financial analysis with the following structure:
+            {
+              "summary": "Brief overview of financial situation",
+              "trends": ["Array of identified spending patterns"],
+              "recommendations": ["Array of actionable suggestions"],
+              "forecast": {
+                "nextMonthExpense": number,
+                "confidence": number between 0 and 1,
+                "breakdown": [
+                  {
+                    "category": "Category name",
+                    "amount": "Predicted amount as number",
+                    "trend": "increasing/decreasing/stable"
+                  }
+                ]
+              },
+              "riskAnalysis": {
+                "level": "low/medium/high",
+                "factors": ["Array of risk factors"]
+              },
+              "seasonalPatterns": [
+                {
+                  "pattern": "Description of pattern",
+                  "confidence": number between 0 and 1,
+                  "months": ["Affected months"]
+                }
+              ],
+              "budgetOptimization": {
+                "suggestions": ["Array of cost-saving suggestions"],
+                "potentialSavings": number
+              }
+            }`,
         },
         {
           role: "user",
@@ -107,31 +132,49 @@ export async function generateFinancialInsights(
     });
 
     const result = JSON.parse(response.choices[0].message.content);
+
+    // Ensure all required properties exist with safe defaults
     return {
-      summary: result.summary,
-      trends: result.trends,
-      recommendations: result.recommendations,
+      summary: result.summary || "Financial analysis unavailable",
+      trends: Array.isArray(result.trends) ? result.trends : [],
+      recommendations: Array.isArray(result.recommendations) ? result.recommendations : [],
       forecast: {
-        nextMonthExpense: Math.max(0, Number(result.forecast.nextMonthExpense)),
-        confidence: Math.max(0, Math.min(1, result.forecast.confidence)),
-        breakdown: result.forecast.breakdown.map((item: any) => ({
-          category: item.category,
-          amount: Math.max(0, Number(item.amount)),
-          trend: item.trend
-        }))
+        nextMonthExpense: typeof result.forecast?.nextMonthExpense === 'number' 
+          ? Math.max(0, result.forecast.nextMonthExpense)
+          : 0,
+        confidence: typeof result.forecast?.confidence === 'number'
+          ? Math.max(0, Math.min(1, result.forecast.confidence))
+          : 0,
+        breakdown: Array.isArray(result.forecast?.breakdown)
+          ? result.forecast.breakdown.map((item: any) => ({
+              category: item.category || 'other',
+              amount: typeof item.amount === 'number' ? Math.max(0, item.amount) : 0,
+              trend: item.trend || 'stable'
+            }))
+          : []
       },
       riskAnalysis: {
-        level: result.riskAnalysis.level,
-        factors: result.riskAnalysis.factors
+        level: result.riskAnalysis?.level || "low",
+        factors: Array.isArray(result.riskAnalysis?.factors) 
+          ? result.riskAnalysis.factors 
+          : []
       },
-      seasonalPatterns: result.seasonalPatterns.map((pattern: any) => ({
-        pattern: pattern.pattern,
-        confidence: Math.max(0, Math.min(1, pattern.confidence)),
-        months: pattern.months
-      })),
+      seasonalPatterns: Array.isArray(result.seasonalPatterns)
+        ? result.seasonalPatterns.map((pattern: any) => ({
+            pattern: pattern.pattern || '',
+            confidence: typeof pattern.confidence === 'number'
+              ? Math.max(0, Math.min(1, pattern.confidence))
+              : 0,
+            months: Array.isArray(pattern.months) ? pattern.months : []
+          }))
+        : [],
       budgetOptimization: {
-        suggestions: result.budgetOptimization.suggestions,
-        potentialSavings: Math.max(0, Number(result.budgetOptimization.potentialSavings))
+        suggestions: Array.isArray(result.budgetOptimization?.suggestions)
+          ? result.budgetOptimization.suggestions
+          : [],
+        potentialSavings: typeof result.budgetOptimization?.potentialSavings === 'number'
+          ? Math.max(0, result.budgetOptimization.potentialSavings)
+          : 0
       }
     };
   } catch (error) {

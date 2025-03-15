@@ -48,20 +48,24 @@ export async function predictExpenseCategory(
           role: "system",
           content: `You are an expense categorization expert for touring musicians. 
             Categorize expenses into: travel, lodging, food, gear, merchandise, promotion, other.
-            Respond with a JSON object containing the predicted category and confidence score (0-1).`,
+            Return your response as a JSON object with this format: 
+            {
+              "category": "category_name",
+              "confidence": confidence_score
+            }`,
         },
         {
           role: "user",
-          content: `Expense description: "${description}", Amount: $${amount}`,
+          content: `Expense description: "${description}", Amount: $${amount}. Respond in JSON format.`,
         },
       ],
       response_format: { type: "json_object" },
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return {
-      category: result.category.toLowerCase(),
-      confidence: Math.max(0, Math.min(1, result.confidence)),
+      category: (result.category || "other").toLowerCase(),
+      confidence: Math.max(0, Math.min(1, result.confidence || 0)),
     };
   } catch (error) {
     console.error("OpenAI API error:", error);
@@ -87,7 +91,7 @@ export async function generateFinancialInsights(
             Focus on practical, actionable advice for budget management.
             Consider seasonal patterns, industry trends, and risk factors.
 
-            Provide a detailed financial analysis with the following structure:
+            Return your analysis in this exact JSON format:
             {
               "summary": "Brief overview of financial situation",
               "trends": ["Array of identified spending patterns"],
@@ -122,7 +126,7 @@ export async function generateFinancialInsights(
         },
         {
           role: "user",
-          content: `Analyze these tour expenses:
+          content: `Analyze these tour expenses and respond in JSON format:
             Total Budget: $${budget}
             Expenses: ${JSON.stringify(expenses)}
             Current Date: ${new Date().toISOString()}`,
@@ -131,7 +135,7 @@ export async function generateFinancialInsights(
       response_format: { type: "json_object" },
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const result = JSON.parse(response.choices[0].message.content || "{}");
 
     // Ensure all required properties exist with safe defaults
     return {

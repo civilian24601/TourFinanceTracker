@@ -16,6 +16,25 @@ app.set("trust proxy", 1);
   try {
     const server = await registerRoutes(app);
 
+    // Request timeout middleware
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      // Set timeout to 30 seconds
+      req.setTimeout(30000, () => {
+        const err = new Error('Request Timeout');
+        err.status = 408;
+        next(err);
+      });
+      next();
+    });
+
+    // Error handling middleware should be first
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      console.error('Server error:', err);
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      res.status(status).json({ message });
+    });
+
     if (app.get("env") === "development") {
       await setupVite(app, server);
     } else {
@@ -60,19 +79,10 @@ app.set("trust proxy", 1);
       next();
     });
 
-    // Error handling middleware
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      console.error('Server error:', err);
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      res.status(status).json({ message });
-    });
-
-
     const port = 5000;
     server.listen({
       port,
-      host: "0.0.0.0",
+      host: "0.0.0.0", 
       reusePort: true,
     }, () => {
       log(`serving on port ${port}`);

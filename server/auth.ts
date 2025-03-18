@@ -52,11 +52,12 @@ export function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      secure: true,
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: 'none',
       path: '/',
-      httpOnly: true
+      httpOnly: true,
+      domain: '.repl.co'
     },
     store: new PostgresSessionStore({
       pool,
@@ -97,7 +98,7 @@ export function setupAuth(app: Express) {
       {
         clientID: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        callbackURL: "/api/auth/google/callback",
+        callbackURL: "https://workspace.alexrichardhaye.repl.co/api/auth/google/callback",
         proxy: true
       },
       async (accessToken, refreshToken, profile, done) => {

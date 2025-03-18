@@ -15,8 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
-import { Music2, Github } from "lucide-react";
-import { SiGoogle } from "react-icons/si";
+import { Music2 } from "lucide-react";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -52,35 +51,6 @@ export default function AuthPage() {
             <CardTitle>Welcome to Tour Tracker</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4 mb-6">
-              <Button
-                variant="outline"
-                className="w-full flex items-center gap-2"
-                onClick={() => window.location.href = "/api/auth/google"}
-              >
-                <SiGoogle className="h-4 w-4" />
-                Continue with Google
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full flex items-center gap-2"
-                onClick={() => window.location.href = "/api/auth/github"}
-              >
-                <Github className="h-4 w-4" />
-                Continue with GitHub
-              </Button>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
-            </div>
-
             <Tabs defaultValue="login">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Login</TabsTrigger>

@@ -10,56 +10,88 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Set trust proxy BEFORE CORS and session setup
-app.set("trust proxy", 1);
-
 // Setup CORS before session and auth
 app.use(cors({
-  origin: [
-    'https://workspace.alexrichardhaye.repl.co',
-    new RegExp(`^https://${process.env.REPL_ID}-00-.*\\.worf\\.replit\\.dev$`),
-    'http://localhost:5000'
-  ],
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-  exposedHeaders: ['Set-Cookie'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Setup session and auth before routing and error handling
+app.set("trust proxy", 1);
 
 (async () => {
   try {
-    // Register routes first before any other middleware
     const server = await registerRoutes(app);
 
-    // Request logging middleware
-    app.use((req, res, next) => {
-      console.log(`${req.method} ${req.path}`, {
-        headers: req.headers,
-        cookies: req.cookies,
-        session: req.session
+    // Request timeout middleware
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      // Set timeout to 30 seconds
+      req.setTimeout(30000, () => {
+        const err = new Error('Request Timeout');
+        err.status = 408;
+        next(err);
       });
       next();
     });
 
-    // Error handling middleware
+    // Error handling middleware should be first
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       console.error('Server error:', err);
-      res.status(err.status || 500).json({ 
-        message: err.message || "Internal Server Error" 
-      });
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      res.status(status).json({ message });
     });
 
-    // Setup Vite AFTER routes are registered
     if (app.get("env") === "development") {
       await setupVite(app, server);
     } else {
       serveStatic(app);
     }
 
+    // Request logging
+    app.use((req, res, next) => {
+      const start = Date.now();
+      const path = req.path;
+      let capturedJsonResponse: Record<string, any> | undefined = undefined;
+
+      // Log session information
+      console.log('Session ID:', req.sessionID);
+      console.log('Is Authenticated:', req.isAuthenticated());
+      if (req.user) {
+        console.log('User ID:', req.user.id);
+      }
+
+      const originalResJson = res.json;
+      res.json = function (bodyJson, ...args) {
+        capturedJsonResponse = bodyJson;
+        return originalResJson.apply(res, [bodyJson, ...args]);
+      };
+
+      res.on("finish", () => {
+        const duration = Date.now() - start;
+        if (path.startsWith("/api")) {
+          let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+          if (capturedJsonResponse) {
+            logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+          }
+
+          if (logLine.length > 80) {
+            logLine = logLine.slice(0, 79) + "…";
+          }
+
+          log(logLine);
+        }
+      });
+
+      next();
+    });
+
     const port = 5000;
     server.listen({
       port,
-      host: "0.0.0.0",
+      host: "0.0.0.0", 
       reusePort: true,
     }, () => {
       log(`serving on port ${port}`);

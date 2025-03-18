@@ -49,16 +49,15 @@ export function setupAuth(app: Express) {
 
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET!,
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     proxy: true,
     cookie: {
       secure: true,
       maxAge: 24 * 60 * 60 * 1000,
       sameSite: 'none',
       path: '/',
-      httpOnly: true,
-      domain: '.worf.replit.dev'
+      httpOnly: true
     },
     store: new PostgresSessionStore({
       pool,

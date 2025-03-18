@@ -28,7 +28,10 @@ app.use(cors({
 
 (async () => {
   try {
-    // Request logging middleware should be first
+    // Register routes first before any other middleware
+    const server = await registerRoutes(app);
+
+    // Request logging middleware
     app.use((req, res, next) => {
       console.log(`${req.method} ${req.path}`, {
         headers: req.headers,
@@ -38,25 +41,12 @@ app.use(cors({
       next();
     });
 
-    const server = await registerRoutes(app);
-
-    // Request timeout middleware
-    app.use((req: Request, res: Response, next: NextFunction) => {
-      // Set timeout to 30 seconds
-      req.setTimeout(30000, () => {
-        const err = new Error('Request Timeout');
-        err.status = 408;
-        next(err);
-      });
-      next();
-    });
-
     // Error handling middleware
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       console.error('Server error:', err);
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      res.status(status).json({ message });
+      res.status(err.status || 500).json({ 
+        message: err.message || "Internal Server Error" 
+      });
     });
 
     if (app.get("env") === "development") {

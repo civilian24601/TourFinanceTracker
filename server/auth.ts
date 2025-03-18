@@ -1,30 +1,26 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as GitHubStrategy } from "passport-github2";
-import { Express } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import connectPg from "connect-pg-simple";
+import { Express } from "express";
+import { pool } from "./db";
+import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
-import connectPg from "connect-pg-simple";
-import { pool } from "./db";
 
-declare global {
-  namespace Express {
-    interface User extends SelectUser {}
-  }
-}
+const PostgresSessionStore = connectPg(session);
+const scryptAsync = promisify(scrypt);
 
 function getCallbackUrl(provider: string) {
   const baseUrl = process.env.REPL_ID
     ? `https://${process.env.REPL_ID}-00-260iqc51qwukq.worf.replit.dev`
     : "https://workspace.alexrichardhaye.repl.co";
-  console.log(`Generated callback URL for ${provider}:`, `${baseUrl}/api/auth/${provider}/callback`);
-  return `${baseUrl}/api/auth/${provider}/callback`;
+  const url = `${baseUrl}/api/auth/${provider}/callback`;
+  console.log(`Generated callback URL for ${provider}:`, url);
+  return url;
 }
-
-const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -32,16 +28,7 @@ async function hashPassword(password: string) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
-async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
-}
-
 export function setupAuth(app: Express) {
-  const PostgresSessionStore = connectPg(session);
-
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || randomBytes(32).toString('hex'),
     resave: false,
@@ -51,16 +38,15 @@ export function setupAuth(app: Express) {
       secure: true,
       maxAge: 24 * 60 * 60 * 1000,
       sameSite: 'none',
-      httpOnly: true
+      httpOnly: true,
     },
     store: new PostgresSessionStore({
       pool,
       createTableIfMissing: true,
-      tableName: 'session',
-      pruneSessionInterval: 60 * 15,
-      errorLog: console.error
+      tableName: "session",
+      errorLog: console.error,
     }),
-    name: 'tour-tracker.sid'
+    name: "tour-tracker.sid",
   };
 
   app.use(session(sessionSettings));
@@ -74,7 +60,7 @@ export function setupAuth(app: Express) {
         clientID: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         callbackURL: getCallbackUrl("google"),
-        proxy: true
+        proxy: true,
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
@@ -93,7 +79,7 @@ export function setupAuth(app: Express) {
           return done(null, user);
         } catch (error) {
           console.error('Google auth error:', error);
-          return done(error);
+          return done(error as Error);
         }
       }
     )
@@ -125,7 +111,7 @@ export function setupAuth(app: Express) {
           return done(null, user);
         } catch (error) {
           console.error('GitHub auth error:', error);
-          return done(error);
+          return done(error as Error);
         }
       }
     )
@@ -218,7 +204,6 @@ export function setupAuth(app: Express) {
     res.json(req.user);
   });
 
-  // Health check endpoint
   app.get("/api/health", (req, res) => {
     res.json({ 
       authenticated: req.isAuthenticated(),

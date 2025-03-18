@@ -85,23 +85,25 @@ export function setupAuth(app: Express) {
       {
         clientID: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        callbackURL: "/api/auth/google/callback",
+        callbackURL: "https://workspace.alexrichardhaye.repl.co/api/auth/google/callback",
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
+          console.log('Google auth attempt:', profile.id);
           let user = await storage.getUserByUsername(`google:${profile.id}`);
 
           if (!user) {
-            // Create new user if doesn't exist
+            console.log('Creating new Google user:', profile.id);
             user = await storage.createUser({
               username: `google:${profile.id}`,
               password: await hashPassword(randomBytes(32).toString("hex")),
-              // Add any additional user data you want to store
             });
           }
 
+          console.log('Google auth successful:', user.id);
           return done(null, user);
         } catch (error) {
+          console.error('Google auth error:', error);
           return done(error);
         }
       }
@@ -114,23 +116,25 @@ export function setupAuth(app: Express) {
       {
         clientID: process.env.GITHUB_CLIENT_ID!,
         clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-        callbackURL: "/api/auth/github/callback",
+        callbackURL: "https://workspace.alexrichardhaye.repl.co/api/auth/github/callback",
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
+          console.log('GitHub auth attempt:', profile.id);
           let user = await storage.getUserByUsername(`github:${profile.id}`);
 
           if (!user) {
-            // Create new user if doesn't exist
+            console.log('Creating new GitHub user:', profile.id);
             user = await storage.createUser({
               username: `github:${profile.id}`,
               password: await hashPassword(randomBytes(32).toString("hex")),
-              // Add any additional user data you want to store
             });
           }
 
+          console.log('GitHub auth successful:', user.id);
           return done(null, user);
         } catch (error) {
+          console.error('GitHub auth error:', error);
           return done(error);
         }
       }

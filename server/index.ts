@@ -12,10 +12,13 @@ app.use(express.urlencoded({ extended: false }));
 
 // Setup CORS before session and auth
 app.use(cors({
-  origin: true,
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://workspace.alexrichardhaye.repl.co'
+    : 'http://localhost:5173',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposedHeaders: ['set-cookie'],
 }));
 
 // Setup session and auth before routing and error handling

@@ -253,7 +253,13 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
-      console.log('Unauthorized access attempt');
+      console.log('Unauthorized access attempt', {
+        path: req.path,
+        method: req.method,
+        headers: req.headers,
+        session: req.session,
+        cookies: req.cookies
+      });
       return res.sendStatus(401);
     }
     console.log('User authenticated:', req.user?.id);

@@ -51,18 +51,20 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
       secure: true,
       maxAge: 24 * 60 * 60 * 1000,
       sameSite: 'none',
       path: '/',
-      httpOnly: true
+      httpOnly: true,
+      domain: '.worf.replit.dev'
     },
     store: new PostgresSessionStore({
       pool,
       createTableIfMissing: true,
       tableName: 'session',
-      pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+      pruneSessionInterval: 60 * 15,
       errorLog: console.error
     }),
     name: 'tour-tracker.sid'

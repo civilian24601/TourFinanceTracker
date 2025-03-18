@@ -1,0 +1,63 @@
+You are Claude Sonnet, integrated with Replit Agent, tasked with enhancing an existing Next.js expense tracking app (Roadbook) for touring musicians. The app is live, using a PostgreSQL database hosted on Neon (tables: expenses, tours, users, with sequences), and the frontend is built with Next.js. The current "Add New Expense" page (attached screenshot from a prior message) needs a major upgrade based on the following detailed instructions. You are free to choose the best tools and libraries, but follow the structure, design, and functionality outlined below. Ensure the implementation is tested and deployed within Replit.
+
+### Project Context
+- **Database**: PostgreSQL via Neon, with existing tables `expenses`, `tours`, `users`. Update `expenses` to include columns: `tour` (text, nullable), `amount` (numeric), `category` (text), `description` (text), `tags` (text[]), `date` (timestamp, default now). Ensure `tours` has `name` (text), `start_date` (timestamp), `end_date` (timestamp).
+- **Frontend**: Next.js, with a dark theme (bg-gray-900, text-white).
+- **Goal**: Enhance the expense entry page with new features while maintaining the live deployment.
+
+### Implementation Instructions
+1. **Database Setup and Migration**
+   - Connect to the Neon PostgreSQL instance using an ORM (e.g., Prisma or TypeORM). Retrieve the connection string from Replit's environment variables or a `.env` file (e.g., `DATABASE_URL`).
+   - Execute a migration to update the `expenses` table with the new columns. Provide a SQL snippet or ORM migration code (e.g., Prisma schema).
+   - Seed the database with 3 sample tours (e.g., "Tour A", "Summer 2024") and 10 predefined tags (e.g., "Gas" under Travel, "Hotel" under Lodging) with category-color mappings (e.g., Travel=blue, Lodging=green).
+
+2. **UI Redesign**
+   - **Page**: Create or update `/expense` (or equivalent) as a dynamic Next.js page.
+   - **Layout**:
+     - **Title**: "Add New Expense" (text-white, text-2xl, font-bold, mb-4).
+     - **Fields**:
+       - **Tour (Optional)**: Replace with a `<input>` or custom component with autocomplete, fetching tours from the `tours` table via an API route. Style with Tailwind (`bg-gray-800`, `text-white`, `border`, `rounded`, `p-2`, `mb-4`).
+       - **Amount**: Use a `<input type="number">` with currency formatting (e.g., "$0.00") and a calculator icon (e.g., from a library like `react-icons`) that opens a modal with a keypad. Style similarly.
+       - **Category**: Replace with a `<select>` or custom dropdown with options: "Travel", "Lodging", "Gear Purchase", "Gear Maintenance", "Meals & Per Diem", "Merch Production", "Merch Sales Expenses", "Marketing & Promotion", "Crew & Personnel", "Venue & Booking Fees", "Recording & Studio", "Miscellaneous". Style with Tailwind.
+       - **Description**: Keep as `<textarea>`, add a camera icon to trigger OCR (e.g., Tesseract.js) for tag suggestions. Style with Tailwind.
+     - **Tags Gallery**: Below Description, add a horizontal `<div>` with `overflow-x-auto` containing multi-colored tag chips. Fetch tags from the database with their category-color mappings. Use `<button>` or a library component (e.g., `react-tag-input`), styled with Tailwind (`bg-blue-500`, `text-white`, `rounded-full`, `px-3`, `py-1`, `mr-2`). Include a search `<input>` with a library (e.g., Fuse.js) to filter tags dynamically.
+     - **Add Expense Button**: Keep as a `<button>` with Tailwind (`bg-orange-500`, `text-white`, `rounded-full`, `px-6`, `py-3`, `flex`, `items-center`), add a `+` icon. On click, submit the form and trigger a success animation (e.g., using Framer Motion with a fade-in checkmark).
+     - **Navigation**: Maintain Home, Tours, Logout links at the bottom, styled with Tailwind (`text-gray-300`).
+   - **Responsiveness**: Ensure the layout works on mobile and desktop (e.g., use Tailwind’s responsive prefixes).
+
+3. **Backend Integration**
+   - **API Routes**: Create Next.js API routes under `/pages/api/`:
+     - `GET /api/tours`: Fetch all tours.
+     - `GET /api/tags`: Fetch all tags with category and color.
+     - `POST /api/expenses`: Save a new expense with the provided fields.
+   - **Database Queries**: Use the ORM to handle CRUD operations. Ensure `tags` is stored as a PostgreSQL array.
+   - **Security**: Add basic input validation and CORS.
+
+4. **Functionality**
+   - Implement form submission to the `/api/expenses` endpoint.
+   - Use OCR (e.g., Tesseract.js) on receipt uploads to suggest tags, storing results in the tags array.
+   - Enable multiple tag selection, displayed below the Description field.
+   - Add a success toast or animation on successful submission.
+
+5. **Testing and Deployment**
+   - **Unit Tests**: Write tests for API routes and the form submission (e.g., using Jest and React Testing Library).
+   - **Sample Data**: Verify the seeded data works with the UI.
+   - **Deploy**: Update the live Replit deployment, ensuring the database connection persists.
+
+### Deliverables
+- A fully functional Next.js page with the redesigned UI and PostgreSQL integration.
+- Updated database schema with seeded data.
+- A deployed version accessible via Replit’s Webview.
+- Test results confirming functionality.
+
+### Constraints
+- Work within Replit’s environment and Neon PostgreSQL limits.
+- Avoid external dependencies requiring manual server setup beyond Replit.
+- Ensure the UI is accessible (WCAG 2.1 compliant) and responsive.
+
+### Execution
+- Provide the complete code (frontend, backend, migration script).
+- Log any errors and suggest fixes.
+- Output the deployment URL and test results upon completion.
+
+Proceed step-by-step, choosing optimal tools, and deliver the final implementation.

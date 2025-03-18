@@ -8,6 +8,18 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+
+// Helper to get Replit values
+function getReplitValues() {
+  return {
+    REPL_ID: process.env.REPL_ID,
+    REPL_SLUG: process.env.REPL_SLUG,
+    REPL_OWNER: process.env.REPL_OWNER
+  };
+}
+
+console.log('Replit Values:', getReplitValues());
+
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 

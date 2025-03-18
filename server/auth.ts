@@ -190,29 +190,44 @@ export function setupAuth(app: Express) {
   });
 
   // Google auth routes
-  app.get("/api/auth/google", passport.authenticate("google", { 
-    scope: ["profile", "email"] 
-  }));
+  app.get("/api/auth/google", (req, res, next) => {
+    console.log('Starting Google auth...');
+    passport.authenticate("google", { 
+      scope: ["profile", "email"],
+      prompt: 'select_account'
+    })(req, res, next);
+  });
 
   app.get(
     "/api/auth/google/callback",
-    passport.authenticate("google", { 
-      failureRedirect: "/auth",
-      successRedirect: "/",
-    })
+    (req, res, next) => {
+      console.log('Google auth callback received');
+      passport.authenticate("google", { 
+        failureRedirect: "/auth",
+        successRedirect: "/",
+        failureMessage: true
+      })(req, res, next);
+    }
   );
 
   // GitHub auth routes
-  app.get("/api/auth/github", passport.authenticate("github", { 
-    scope: ["user:email"] 
-  }));
+  app.get("/api/auth/github", (req, res, next) => {
+    console.log('Starting GitHub auth...');
+    passport.authenticate("github", { 
+      scope: ["user:email"]
+    })(req, res, next);
+  });
 
   app.get(
     "/api/auth/github/callback",
-    passport.authenticate("github", { 
-      failureRedirect: "/auth",
-      successRedirect: "/",
-    })
+    (req, res, next) => {
+      console.log('GitHub auth callback received');
+      passport.authenticate("github", { 
+        failureRedirect: "/auth",
+        successRedirect: "/",
+        failureMessage: true
+      })(req, res, next);
+    }
   );
 
   app.post("/api/logout", (req, res, next) => {

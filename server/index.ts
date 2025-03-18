@@ -10,6 +10,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Set trust proxy BEFORE CORS and session setup
+app.set("trust proxy", 1);
+
 // Setup CORS before session and auth
 app.use(cors({
   origin: [
@@ -23,13 +26,8 @@ app.use(cors({
   exposedHeaders: ['Set-Cookie'],
 }));
 
-// Setup session and auth before routing and error handling
-app.set("trust proxy", 1);
-
 (async () => {
   try {
-    const server = await registerRoutes(app);
-
     // Request logging middleware should be first
     app.use((req, res, next) => {
       console.log(`${req.method} ${req.path}`, {
@@ -39,6 +37,8 @@ app.set("trust proxy", 1);
       });
       next();
     });
+
+    const server = await registerRoutes(app);
 
     // Request timeout middleware
     app.use((req: Request, res: Response, next: NextFunction) => {

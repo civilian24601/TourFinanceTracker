@@ -1,5 +1,4 @@
 import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import { Express } from "express";
@@ -49,10 +48,9 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     proxy: true,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       maxAge: 24 * 60 * 60 * 1000,
-      sameSite: "lax",
-      path: '/',
+      sameSite: 'none',
       httpOnly: true
     },
     store: new PostgresSessionStore({
@@ -165,7 +163,11 @@ export function setupAuth(app: Express) {
   app.get(
     "/api/auth/google/callback",
     (req, res, next) => {
-      console.log('Google auth callback received');
+      console.log('Google auth callback received', {
+        query: req.query,
+        headers: req.headers,
+        session: req.session
+      });
       passport.authenticate("google", { 
         failureRedirect: "/auth",
         successRedirect: "/",
@@ -184,7 +186,11 @@ export function setupAuth(app: Express) {
   app.get(
     "/api/auth/github/callback",
     (req, res, next) => {
-      console.log('GitHub auth callback received');
+      console.log('GitHub auth callback received', {
+        query: req.query,
+        headers: req.headers,
+        session: req.session
+      });
       passport.authenticate("github", { 
         failureRedirect: "/auth",
         successRedirect: "/",
@@ -201,45 +207,23 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
+    console.log('User check', {
+      isAuthenticated: req.isAuthenticated(),
+      session: req.session,
+      user: req.user
+    });
     if (!req.isAuthenticated()) {
-      console.log('Unauthorized access attempt', {
-        path: req.path,
-        method: req.method,
-        headers: req.headers,
-        session: req.session,
-        cookies: req.cookies
-      });
       return res.sendStatus(401);
     }
-    console.log('User authenticated:', req.user?.id);
     res.json(req.user);
   });
 
-  // Local auth routes
-  app.post("/api/register", async (req, res, next) => {
-    try {
-      const existingUser = await storage.getUserByUsername(req.body.username);
-      if (existingUser) {
-        return res.status(400).send("Username already exists");
-      }
-
-      const user = await storage.createUser({
-        ...req.body,
-        password: await hashPassword(req.body.password),
-      });
-
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(201).json(user);
-      });
-    } catch (error) {
-      console.error('Registration error:', error);
-      next(error);
-    }
-  });
-
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    console.log('Login successful:', req.user?.id);
-    res.status(200).json(req.user);
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      authenticated: req.isAuthenticated(),
+      user: req.user,
+      session: req.session
+    });
   });
 }

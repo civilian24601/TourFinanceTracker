@@ -8,6 +8,14 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
+
+declare global {
+  namespace Express {
+    interface User extends SelectUser {}
+  }
+}
 
 // Helper to get Replit values
 function getReplitValues() {
@@ -20,13 +28,11 @@ function getReplitValues() {
 
 console.log('Replit Values:', getReplitValues());
 
-import connectPg from "connect-pg-simple";
-import { pool } from "./db";
-
-declare global {
-  namespace Express {
-    interface User extends SelectUser {}
-  }
+function getCallbackUrl(provider: string) {
+  const baseUrl = process.env.REPL_ID
+    ? `https://${process.env.REPL_ID}-00-260iqc51qwukq.worf.replit.dev`
+    : "https://workspace.alexrichardhaye.repl.co";
+  return `${baseUrl}/api/auth/${provider}/callback`;
 }
 
 const scryptAsync = promisify(scrypt);
@@ -48,14 +54,14 @@ export function setupAuth(app: Express) {
   const PostgresSessionStore = connectPg(session);
 
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET!,
-    resave: true,
-    saveUninitialized: true,
+    secret: process.env.SESSION_SECRET || randomBytes(32).toString('hex'),
+    resave: false,
+    saveUninitialized: false,
     proxy: true,
     cookie: {
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
-      sameSite: 'none',
+      sameSite: "lax",
       path: '/',
       httpOnly: true
     },
@@ -98,7 +104,7 @@ export function setupAuth(app: Express) {
       {
         clientID: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        callbackURL: `/api/auth/google/callback`,
+        callbackURL: getCallbackUrl("google"),
         proxy: true
       },
       async (accessToken, refreshToken, profile, done) => {
@@ -130,7 +136,7 @@ export function setupAuth(app: Express) {
       {
         clientID: process.env.GITHUB_CLIENT_ID!,
         clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-        callbackURL: "https://workspace.alexrichardhaye.repl.co/api/auth/github/callback",
+        callbackURL: getCallbackUrl("github"),
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
@@ -175,35 +181,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Local auth routes
-  app.post("/api/register", async (req, res, next) => {
-    try {
-      const existingUser = await storage.getUserByUsername(req.body.username);
-      if (existingUser) {
-        return res.status(400).send("Username already exists");
-      }
-
-      const user = await storage.createUser({
-        ...req.body,
-        password: await hashPassword(req.body.password),
-      });
-
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(201).json(user);
-      });
-    } catch (error) {
-      console.error('Registration error:', error);
-      next(error);
-    }
-  });
-
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    console.log('Login successful:', req.user?.id);
-    res.status(200).json(req.user);
-  });
-
-  // Google auth routes
+  // Auth routes
   app.get("/api/auth/google", (req, res, next) => {
     console.log('Starting Google auth...');
     passport.authenticate("google", { 
@@ -224,7 +202,6 @@ export function setupAuth(app: Express) {
     }
   );
 
-  // GitHub auth routes
   app.get("/api/auth/github", (req, res, next) => {
     console.log('Starting GitHub auth...');
     passport.authenticate("github", { 
@@ -264,5 +241,32 @@ export function setupAuth(app: Express) {
     }
     console.log('User authenticated:', req.user?.id);
     res.json(req.user);
+  });
+  // Local auth routes
+  app.post("/api/register", async (req, res, next) => {
+    try {
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).send("Username already exists");
+      }
+
+      const user = await storage.createUser({
+        ...req.body,
+        password: await hashPassword(req.body.password),
+      });
+
+      req.login(user, (err) => {
+        if (err) return next(err);
+        res.status(201).json(user);
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      next(error);
+    }
+  });
+
+  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    console.log('Login successful:', req.user?.id);
+    res.status(200).json(req.user);
   });
 }

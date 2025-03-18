@@ -92,7 +92,7 @@ app.set("trust proxy", 1);
     const port = 5000;
     server.listen({
       port,
-      host: "0.0.0.0", 
+      host: "0.0.0.0",
       reusePort: true,
     }, () => {
       log(`serving on port ${port}`);

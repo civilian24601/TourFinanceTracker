@@ -15,6 +15,7 @@ export interface IStorage {
   createTour(tour: InsertTour & { userId: number }): Promise<Tour>;
   getToursByUser(userId: number): Promise<Tour[]>;
   getTour(id: number): Promise<Tour | undefined>;
+  deleteTour(id: number): Promise<void>;
 
   createExpense(expense: InsertExpense & { userId: number }): Promise<Expense>;
   getExpensesByTour(tourId: number): Promise<Expense[]>;
@@ -97,6 +98,15 @@ export class DatabaseStorage implements IStorage {
       return tour;
     } catch (error) {
       console.error('Error fetching tour:', error);
+      throw error;
+    }
+  }
+
+  async deleteTour(id: number): Promise<void> {
+    try {
+      await db.delete(tours).where(eq(tours.id, id));
+    } catch (error) {
+      console.error('Error deleting tour:', error);
       throw error;
     }
   }

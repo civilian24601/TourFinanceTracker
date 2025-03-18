@@ -26,7 +26,7 @@ export default function TourDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-32">
       <main className="container mx-auto py-6 px-4 space-y-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">{tour.name}</h1>

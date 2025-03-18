@@ -51,6 +51,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(tour);
   });
 
+  // Add DELETE tour endpoint
+  app.delete("/api/tours/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const tourId = parseInt(req.params.id, 10);
+    if (isNaN(tourId)) {
+      return res.status(400).json({ message: "Invalid tour ID" });
+    }
+
+    const tour = await storage.getTour(tourId);
+    if (!tour) {
+      return res.status(404).json({ message: "Tour not found" });
+    }
+
+    // Only allow deletion of tours owned by the authenticated user
+    if (tour.userId !== req.user.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    await storage.deleteTour(tourId);
+    res.sendStatus(200);
+  });
+
+
   // Expenses
   app.post("/api/expenses", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

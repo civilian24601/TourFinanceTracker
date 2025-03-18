@@ -27,6 +27,7 @@ import { Calculator, Camera, Check, Plus } from "lucide-react";
 import { createWorker } from "tesseract.js";
 import { TagInput } from "./tag-input";
 import { CalculatorModal } from "./calculator-modal";
+import { Switch } from "./switch";
 import {
   Dialog,
   DialogContent,
@@ -52,13 +53,14 @@ const commonTags = {
   miscellaneous: ["office", "software", "other"]
 };
 
-export function ExpenseForm() {
+export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [tourDialogOpen, setTourDialogOpen] = useState(false);
+  const [addMultiple, setAddMultiple] = useState(false);
 
   const { data: tours } = useQuery<Tour[]>({
     queryKey: ["/api/tours"],
@@ -68,12 +70,11 @@ export function ExpenseForm() {
     resolver: zodResolver(insertExpenseSchema),
     defaultValues: {
       amount: undefined,
-      category: "other",
+      category: "miscellaneous",
       description: "",
       date: new Date().toISOString(),
       tourId: null,
       offlineId: undefined,
-      tags: []
     },
   });
 
@@ -90,7 +91,15 @@ export function ExpenseForm() {
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        form.reset();
+        if (addMultiple) {
+          form.reset({
+            ...form.getValues(),
+            amount: undefined,
+            description: "",
+          });
+        } else {
+          onSuccess?.();
+        }
       }, 2000);
       toast({
         title: "Expense added",
@@ -123,15 +132,6 @@ export function ExpenseForm() {
       // Set description
       form.setValue('description', text.split('\n')[0]); // First line as description
 
-      // Suggest tags based on text content
-      const suggestedTags = Object.entries(commonTags)
-        .flatMap(([category, tags]) =>
-          tags.filter(tag => text.toLowerCase().includes(tag.toLowerCase()))
-        );
-
-      if (suggestedTags.length > 0) {
-        form.setValue('tags', suggestedTags);
-      }
     } catch (error) {
       console.error('OCR Error:', error);
       toast({
@@ -298,23 +298,19 @@ export function ExpenseForm() {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="tags"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tags</FormLabel>
-              <FormControl>
-                <TagInput
-                  value={field.value || []}
-                  onChange={field.onChange}
-                  suggestions={commonTags[form.watch('category') as keyof typeof commonTags] || []}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="add-multiple"
+            checked={addMultiple}
+            onCheckedChange={setAddMultiple}
+          />
+          <label
+            htmlFor="add-multiple"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Add multiple expenses
+          </label>
+        </div>
 
         <AnimatePresence>
           {showSuccess ? (

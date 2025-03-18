@@ -23,10 +23,18 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Calculator, Camera, Check } from "lucide-react";
+import { Calculator, Camera, Check, Plus } from "lucide-react";
 import { createWorker } from "tesseract.js";
 import { TagInput } from "./tag-input";
 import { CalculatorModal } from "./calculator-modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./dialog";
+import { TourForm } from "./tour-form";
 
 // Predefined tags for common expense types
 const commonTags = {
@@ -50,6 +58,7 @@ export function ExpenseForm() {
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [tourDialogOpen, setTourDialogOpen] = useState(false);
 
   const { data: tours } = useQuery<Tour[]>({
     queryKey: ["/api/tours"],
@@ -116,7 +125,7 @@ export function ExpenseForm() {
 
       // Suggest tags based on text content
       const suggestedTags = Object.entries(commonTags)
-        .flatMap(([category, tags]) => 
+        .flatMap(([category, tags]) =>
           tags.filter(tag => text.toLowerCase().includes(tag.toLowerCase()))
         );
 
@@ -154,23 +163,38 @@ export function ExpenseForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tour (Optional)</FormLabel>
-              <Select
-                onValueChange={(value) => field.onChange(value ? Number(value) : null)}
-                value={field.value?.toString() ?? ""}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a tour" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {tours?.map((tour) => (
-                    <SelectItem key={tour.id} value={tour.id.toString()}>
-                      {tour.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select
+                  onValueChange={(value) => field.onChange(value ? Number(value) : null)}
+                  value={field.value?.toString() ?? ""}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a tour" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {tours?.map((tour) => (
+                      <SelectItem key={tour.id} value={tour.id.toString()}>
+                        {tour.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Dialog open={tourDialogOpen} onOpenChange={setTourDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create New Tour</DialogTitle>
+                    </DialogHeader>
+                    <TourForm onSuccess={() => setTourDialogOpen(false)} />
+                  </DialogContent>
+                </Dialog>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -228,7 +252,7 @@ export function ExpenseForm() {
                 <SelectContent>
                   {categories.map((category) => (
                     <SelectItem key={category} value={category}>
-                      {category.split('_').map(word => 
+                      {category.split('_').map(word =>
                         word.charAt(0).toUpperCase() + word.slice(1)
                       ).join(' ')}
                     </SelectItem>

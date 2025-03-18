@@ -49,6 +49,7 @@ app.use(cors({
       });
     });
 
+    // Setup Vite AFTER routes are registered
     if (app.get("env") === "development") {
       await setupVite(app, server);
     } else {

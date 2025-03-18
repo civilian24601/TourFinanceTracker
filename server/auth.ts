@@ -53,6 +53,26 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  passport.serializeUser((user: any, done) => {
+    console.log('Serializing user:', user.id);
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(async (id: number, done) => {
+    try {
+      const user = await storage.getUser(id);
+      if (!user) {
+        console.log('User not found during deserialization:', id);
+        return done(null, false);
+      }
+      console.log('Deserialized user:', id);
+      done(null, user);
+    } catch (error) {
+      console.error('Deserialization error:', error);
+      done(error);
+    }
+  });
+
   // Google Strategy
   passport.use(
     new GoogleStrategy(
@@ -116,26 +136,6 @@ export function setupAuth(app: Express) {
       }
     )
   );
-
-  passport.serializeUser((user, done) => {
-    console.log('Serializing user:', user.id);
-    done(null, user.id);
-  });
-
-  passport.deserializeUser(async (id: number, done) => {
-    try {
-      const user = await storage.getUser(id);
-      if (!user) {
-        console.log('User not found during deserialization:', id);
-        return done(null, false);
-      }
-      console.log('Deserialized user:', id);
-      done(null, user);
-    } catch (error) {
-      console.error('Deserialization error:', error);
-      done(error);
-    }
-  });
 
   // Auth routes
   app.get("/api/auth/google", (req, res, next) => {

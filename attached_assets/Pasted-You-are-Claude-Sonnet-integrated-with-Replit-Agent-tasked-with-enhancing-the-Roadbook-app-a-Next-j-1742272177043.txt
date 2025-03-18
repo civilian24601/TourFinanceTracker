@@ -1,0 +1,72 @@
+You are Claude Sonnet, integrated with Replit Agent, tasked with enhancing the Roadbook app—a Next.js application with a PostgreSQL database hosted on Neon. The app includes a "Tour Calendar" page (attached screenshot) and an "Add New Expense" page. You will improve the basic "Add Tour" popover page, integrate a "Create Tour" shortcut near the "Select Tour" field (on the expense page or inline), and add end-to-end (e2e) tests using Cypress. Follow these detailed instructions, choosing optimal tools and libraries, and ensure deployment within Replit.
+
+### Project Context
+- **Frontend**: Next.js, with a dark theme (bg-gray-900, text-white) and orange accents (e.g., bg-orange-500).
+- **Database**: PostgreSQL via Neon, with tables `tours` (columns: `name`, `start_date`, `end_date`) and `expenses`.
+- **Current Pages**: 
+  - Tour Calendar: Displays a calendar and "Upcoming Tours" with a "+" button.
+  - Add Tour Popover: Basic, with 4 vertically spaced fields (assumed: name, start date, end date, notes).
+  - Add Expense: Includes a "Select Tour" field.
+
+### Implementation Instructions
+1. **Enhance the Add Tour Popover Page**
+   - **Design**:
+     - **Title**: "Create New Tour" with a calendar icon (e.g., from `react-icons`), styled (text-white, text-2xl, font-bold, mb-4).
+     - **Background**: Add a subtle map or stage graphic (low opacity, e.g., via CSS `background-image`) on bg-gray-900.
+     - **Layout**: Use a 2-column grid or card layout with Tailwind (e.g., `grid grid-cols-2 gap-4`).
+     - **Fields**:
+       - **Tour Name**: `<input>` with placeholder "e.g., Summer 2024 Tour", character counter (max 50), styled (bg-gray-800, text-white, border, rounded, p-2).
+       - **Start Date**: Replace with a date picker (e.g., React-DatePicker), styled similarly.
+       - **End Date**: Date picker, with a "Set Duration" button (bg-orange-500) to auto-set 7 days from Start Date.
+       - **Description/Notes**: `<textarea>` with placeholder "Add tour details or locations", max 200 chars, styled.
+       - **Location (Optional)**: `<input>` with a map icon, placeholder "e.g., Austin, TX".
+     - **Buttons**: 
+       - **Save Tour**: `<button>` (bg-orange-500, text-white, rounded-full, px-6, py-3) with a loading spinner during submission.
+       - **Cancel**: `<button>` (bg-gray-600, text-white, rounded-full, px-4, py-2) to close.
+     - **Validation**: Show inline errors (text-red-500) if fields are empty.
+     - **Animation**: Use Framer Motion for a fade-in/out effect on popover open/close.
+   - **Functionality**:
+     - On "Save Tour" click, send a POST request to `/api/tours` with `{ name, start_date, end_date, description, location }`.
+     - Update the `tours` table in PostgreSQL via an ORM (e.g., Prisma).
+     - Close the popover on success, showing a toast notification.
+
+2. **Integrate Create Tour Shortcut**
+   - **Option 1 (Near Select Tour)**: On the "Add New Expense" page, add a "+ Create Tour" link next to the "Select Tour" `<input>`, styled (text-orange-500, underline, hover:text-orange-300). Clicking it opens the enhanced popover.
+   - **Option 2 (Inline)**: Enhance the "Select Tour" `<input>` with a "+" icon (e.g., from `react-icons`). Typing a new tour name (e.g., "New Tour 2025") and clicking "+" opens the popover, pre-filling the name.
+   - **Behavior**: Save the new tour and refresh the autocomplete options.
+
+3. **Update Tour Calendar Page**
+   - **Calendar**: Mark tour dates (e.g., red circles) based on `start_date` and `end_date` from the `tours` table.
+   - **Upcoming Tours**: List created tours below the calendar, linking to a tour details page (stub for now).
+   - **Button**: Keep the "+" button, styled (bg-orange-500, rounded-full, p-3), to open the popover.
+
+4. **Setup and Run e2e Tests with Cypress**
+   - **Setup**: Install Cypress (`npm install --save-dev cypress`), initialize it (`npx cypress open`), and configure to run against the deployed app URL.
+   - **Test Cases**:
+     - **Create Tour Success**: Visit Tour Calendar, click "+", fill fields (e.g., "Test Tour", 2025-03-01, 2025-03-07, "Rock tour"), save, and verify it appears in Upcoming Tours.
+     - **Inline Tour Creation**: Visit /expense, type "New Tour" in Select Tour, click "+", save, and check it updates the dropdown.
+     - **Calendar Update**: Create a tour, verify dates (e.g., 1st-7th March) are marked.
+     - **Validation Failure**: Leave Tour Name blank, click Save, and confirm an error appears.
+   - **Execution**: Run tests with `npm run cypress:run`, log results, and capture screenshots if possible.
+
+5. **Deployment**
+   - Update the live Replit deployment, ensuring database and UI changes persist.
+   - Provide the deployment URL and test results.
+
+### Deliverables
+- Enhanced "Add Tour" popover page with new design and functionality.
+- Integrated "Create Tour" shortcut on the expense page.
+- Updated Tour Calendar with tour markings.
+- Cypress e2e test setup and results.
+- Deployed app with all changes.
+
+### Constraints
+- Work within Replit and Neon PostgreSQL limits.
+- Ensure responsiveness and accessibility (WCAG 2.1).
+- Keep test runtime <5 minutes.
+
+### Execution
+- Provide complete code (frontend, backend, tests).
+- Log errors and suggest fixes.
+- Output deployment URL and test results.
+Proceed step-by-step and deliver the final implementation.

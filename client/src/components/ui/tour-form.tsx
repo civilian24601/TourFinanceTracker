@@ -9,28 +9,41 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "./form";
 import { Input } from "./input";
+import { Textarea } from "./textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, MapPin, CalendarClock, Check, Loader2 } from "lucide-react";
+import { format, addDays } from "date-fns";
+import * as z from 'zod';
 
 export function TourForm({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const form = useForm<InsertTour>({
-    resolver: zodResolver(insertTourSchema),
+  const form = useForm<InsertTour & { description: string; location: string }>({
+    resolver: zodResolver(insertTourSchema.extend({
+      description: z.string().max(200, "Description must be less than 200 characters"),
+      location: z.string().max(50, "Location must be less than 50 characters").optional(),
+    })),
     defaultValues: {
       name: "",
       startDate: undefined,
       endDate: undefined,
       budget: undefined,
+      description: "",
+      location: "",
     },
   });
 
   const createTour = useMutation({
-    mutationFn: async (data: InsertTour) => {
+    mutationFn: async (data: InsertTour & { description: string; location: string }) => {
       const res = await apiRequest("POST", "/api/tours", {
         ...data,
         budget: Number(data.budget),
@@ -41,12 +54,16 @@ export function TourForm({ onSuccess }: { onSuccess?: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tours"] });
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        form.reset();
+        onSuccess?.();
+      }, 2000);
       toast({
         title: "Tour created",
         description: "Your tour has been created successfully.",
       });
-      form.reset();
-      onSuccess?.();
     },
     onError: (error: Error) => {
       toast({
@@ -57,96 +74,204 @@ export function TourForm({ onSuccess }: { onSuccess?: () => void }) {
     },
   });
 
+  const setDuration = () => {
+    const startDate = form.getValues("startDate");
+    if (startDate) {
+      const endDate = addDays(new Date(startDate), 7);
+      form.setValue("endDate", format(endDate, "yyyy-MM-dd"));
+    }
+  };
+
+  const nameLength = form.watch("name")?.length || 0;
+  const descriptionLength = form.watch("description")?.length || 0;
+
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => createTour.mutate(data))}
-        className="space-y-4"
-      >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tour Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className="relative">
+      {/* Background graphic */}
+      <div 
+        className="absolute inset-0 opacity-5 pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0 L100 50 L50 100 L0 50 Z' fill='%23ffffff'/%3E%3C/svg%3E")`,
+          backgroundSize: "50px 50px",
+        }}
+      />
 
-        <FormField
-          control={form.control}
-          name="startDate"
-          render={({ field: { value, onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Start Date</FormLabel>
-              <FormControl>
-                <Input 
-                  type="date" 
-                  {...field}
-                  value={value ? new Date(value).toISOString().split('T')[0] : ''}
-                  onChange={(e) => onChange(e.target.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="endDate"
-          render={({ field: { value, onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>End Date</FormLabel>
-              <FormControl>
-                <Input 
-                  type="date" 
-                  {...field}
-                  value={value ? new Date(value).toISOString().split('T')[0] : ''}
-                  onChange={(e) => onChange(e.target.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="budget"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Budget</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...field}
-                  value={field.value ?? ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    field.onChange(value === '' ? undefined : Number(value));
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={createTour.isPending}
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit((data) => createTour.mutate(data))}
+          className="space-y-6 relative"
         >
-          Create Tour
-        </Button>
-      </form>
-    </Form>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tour Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="e.g., Summer 2024 Tour" />
+                    </FormControl>
+                    <FormDescription className="text-right">
+                      {nameLength}/50 characters
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field: { value, onChange, ...field } }) => (
+                  <FormItem>
+                    <FormLabel>Start Date</FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input 
+                          type="date" 
+                          {...field}
+                          value={value ? new Date(value).toISOString().split('T')[0] : ''}
+                          onChange={(e) => onChange(e.target.value)}
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={setDuration}
+                      >
+                        <CalendarClock className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field: { value, onChange, ...field } }) => (
+                  <FormItem>
+                    <FormLabel>End Date</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="date" 
+                        {...field}
+                        value={value ? new Date(value).toISOString().split('T')[0] : ''}
+                        onChange={(e) => onChange(e.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="budget"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === '' ? undefined : Number(value));
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input {...field} placeholder="e.g., Austin, TX" />
+                        <MapPin className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        placeholder="Add tour details or locations"
+                        className="resize-none"
+                        rows={4}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-right">
+                      {descriptionLength}/200 characters
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {showSuccess ? (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                className="flex justify-center items-center p-4"
+              >
+                <div className="bg-green-500 text-white rounded-full p-2">
+                  <Check className="h-6 w-6" />
+                </div>
+              </motion.div>
+            ) : (
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onSuccess?.()}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createTour.isPending}
+                  className="min-w-[100px]"
+                >
+                  {createTour.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Save Tour"
+                  )}
+                </Button>
+              </div>
+            )}
+          </AnimatePresence>
+        </form>
+      </Form>
+    </div>
   );
 }

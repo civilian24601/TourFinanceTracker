@@ -57,7 +57,7 @@ export function setupAuth(app: Express) {
       sameSite: 'none',
       path: '/',
       httpOnly: true,
-      domain: '.replit.dev'
+      domain: '.worf.replit.dev'
     },
     store: new PostgresSessionStore({
       pool,

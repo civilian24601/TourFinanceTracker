@@ -86,20 +86,11 @@ export function TourForm({ onSuccess }: { onSuccess?: () => void }) {
   const descriptionLength = form.watch("description")?.length || 0;
 
   return (
-    <div className="relative">
-      {/* Background graphic */}
-      <div 
-        className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0 L100 50 L50 100 L0 50 Z' fill='%23ffffff'/%3E%3C/svg%3E")`,
-          backgroundSize: "50px 50px",
-        }}
-      />
-
+    <div className="max-h-[80vh] overflow-y-auto px-6 py-4">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit((data) => createTour.mutate(data))}
-          className="space-y-6 relative"
+          className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
@@ -235,39 +226,39 @@ export function TourForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
           </div>
 
+          <div className="sticky bottom-0 bg-background pt-4 pb-2 flex gap-2 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onSuccess?.()}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={createTour.isPending}
+              className="min-w-[100px]"
+            >
+              {createTour.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Save Tour"
+              )}
+            </Button>
+          </div>
+
           <AnimatePresence>
-            {showSuccess ? (
+            {showSuccess && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
-                className="flex justify-center items-center p-4"
+                className="fixed inset-0 flex items-center justify-center bg-background/80"
               >
-                <div className="bg-green-500 text-white rounded-full p-2">
-                  <Check className="h-6 w-6" />
+                <div className="bg-green-500 text-white rounded-full p-4">
+                  <Check className="h-8 w-8" />
                 </div>
               </motion.div>
-            ) : (
-              <div className="flex gap-2 justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onSuccess?.()}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createTour.isPending}
-                  className="min-w-[100px]"
-                >
-                  {createTour.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Save Tour"
-                  )}
-                </Button>
-              </div>
             )}
           </AnimatePresence>
         </form>

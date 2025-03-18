@@ -30,6 +30,9 @@ export class DatabaseStorage implements IStorage {
     this.sessionStore = new PostgresSessionStore({
       pool,
       createTableIfMissing: true,
+      tableName: 'session',
+      pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+      errorLog: console.error // Log session store errors
     });
   }
 
@@ -70,7 +73,7 @@ export class DatabaseStorage implements IStorage {
         userId: tour.userId,
         startDate: new Date(tour.startDate),
         endDate: new Date(tour.endDate),
-        budget: tour.budget
+        budget: tour.budget.toString()
       }).returning();
       return newTour;
     } catch (error) {
@@ -103,7 +106,7 @@ export class DatabaseStorage implements IStorage {
       const [newExpense] = await db.insert(expenses).values({
         tourId: expense.tourId,
         userId: expense.userId,
-        amount: expense.amount,
+        amount: expense.amount.toString(),
         category: expense.category,
         description: expense.description,
         date: new Date(expense.date),

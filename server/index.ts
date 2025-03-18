@@ -21,8 +21,25 @@ app.use(cors({
 // Setup session and auth before routing and error handling
 app.set("trust proxy", 1);
 
+// Handle uncaught exceptions and unhandled promise rejections
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 (async () => {
   try {
+    // Error handling middleware should be first
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      console.error('Server error:', err);
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      res.status(status).json({ message });
+    });
+
     const server = await registerRoutes(app);
 
     // Request timeout middleware
@@ -34,14 +51,6 @@ app.set("trust proxy", 1);
         next(err);
       });
       next();
-    });
-
-    // Error handling middleware should be first
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      console.error('Server error:', err);
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      res.status(status).json({ message });
     });
 
     if (app.get("env") === "development") {

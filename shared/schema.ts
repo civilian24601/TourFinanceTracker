@@ -26,7 +26,6 @@ export const expenses = pgTable("expenses", {
   description: text("description").notNull(),
   date: timestamp("date").notNull(),
   offlineId: text("offline_id"),
-  tags: text("tags").array(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -55,7 +54,6 @@ export const insertExpenseSchema = createInsertSchema(expenses)
     date: true,
     tourId: true,
     offlineId: true,
-    tags: true,
   })
   .extend({
     amount: z.number().min(0, "Amount must be positive").or(
@@ -67,7 +65,6 @@ export const insertExpenseSchema = createInsertSchema(expenses)
     ),
     date: z.string(),
     tourId: z.number().nullable(),
-    tags: z.array(z.string()).optional(),
   });
 
 export const categories = [

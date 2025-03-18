@@ -17,21 +17,11 @@ declare global {
   }
 }
 
-// Helper to get Replit values
-function getReplitValues() {
-  return {
-    REPL_ID: process.env.REPL_ID,
-    REPL_SLUG: process.env.REPL_SLUG,
-    REPL_OWNER: process.env.REPL_OWNER
-  };
-}
-
-console.log('Replit Values:', getReplitValues());
-
 function getCallbackUrl(provider: string) {
   const baseUrl = process.env.REPL_ID
     ? `https://${process.env.REPL_ID}-00-260iqc51qwukq.worf.replit.dev`
     : "https://workspace.alexrichardhaye.repl.co";
+  console.log(`Generated callback URL for ${provider}:`, `${baseUrl}/api/auth/${provider}/callback`);
   return `${baseUrl}/api/auth/${provider}/callback`;
 }
 
@@ -79,25 +69,6 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Local Strategy
-  passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          console.error('Login failed:', username);
-          return done(null, false);
-        } else {
-          console.log('Login successful:', user.id);
-          return done(null, user);
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        return done(error);
-      }
-    }),
-  );
-
   // Google Strategy
   passport.use(
     new GoogleStrategy(
@@ -137,6 +108,7 @@ export function setupAuth(app: Express) {
         clientID: process.env.GITHUB_CLIENT_ID!,
         clientSecret: process.env.GITHUB_CLIENT_SECRET!,
         callbackURL: getCallbackUrl("github"),
+        proxy: true
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
@@ -242,6 +214,7 @@ export function setupAuth(app: Express) {
     console.log('User authenticated:', req.user?.id);
     res.json(req.user);
   });
+
   // Local auth routes
   app.post("/api/register", async (req, res, next) => {
     try {

@@ -12,10 +12,14 @@ app.use(express.urlencoded({ extended: false }));
 
 // Setup CORS before session and auth
 app.use(cors({
-  origin: true,
+  origin: [
+    'https://workspace.alexrichardhaye.repl.co',
+    new RegExp(`^https://${process.env.REPL_ID}-00-.*\\.worf\\.replit\\.dev$`),
+    'http://localhost:5000'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', '*'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
   exposedHeaders: ['Set-Cookie'],
 }));
 
@@ -25,6 +29,16 @@ app.set("trust proxy", 1);
 (async () => {
   try {
     const server = await registerRoutes(app);
+
+    // Request logging middleware should be first
+    app.use((req, res, next) => {
+      console.log(`${req.method} ${req.path}`, {
+        headers: req.headers,
+        cookies: req.cookies,
+        session: req.session
+      });
+      next();
+    });
 
     // Request timeout middleware
     app.use((req: Request, res: Response, next: NextFunction) => {
@@ -37,7 +51,7 @@ app.set("trust proxy", 1);
       next();
     });
 
-    // Error handling middleware should be first
+    // Error handling middleware
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       console.error('Server error:', err);
       const status = err.status || err.statusCode || 500;
@@ -50,44 +64,6 @@ app.set("trust proxy", 1);
     } else {
       serveStatic(app);
     }
-
-    // Request logging
-    app.use((req, res, next) => {
-      const start = Date.now();
-      const path = req.path;
-      let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-      // Log session information
-      console.log('Session ID:', req.sessionID);
-      console.log('Is Authenticated:', req.isAuthenticated());
-      if (req.user) {
-        console.log('User ID:', req.user.id);
-      }
-
-      const originalResJson = res.json;
-      res.json = function (bodyJson, ...args) {
-        capturedJsonResponse = bodyJson;
-        return originalResJson.apply(res, [bodyJson, ...args]);
-      };
-
-      res.on("finish", () => {
-        const duration = Date.now() - start;
-        if (path.startsWith("/api")) {
-          let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-          if (capturedJsonResponse) {
-            logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-          }
-
-          if (logLine.length > 80) {
-            logLine = logLine.slice(0, 79) + "…";
-          }
-
-          log(logLine);
-        }
-      });
-
-      next();
-    });
 
     const port = 5000;
     server.listen({

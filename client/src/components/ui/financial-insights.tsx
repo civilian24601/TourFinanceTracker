@@ -1,28 +1,51 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   TrendingUp, 
   TrendingDown, 
-  AlertCircle, 
-  Calendar, 
-  DollarSign,
-  BarChart as ChartIcon,
-  Clock,
-  Lightbulb,
-  PieChart,
-  Target
+  AlertCircle,
+  CheckCircle,
+  Calendar,
+  DollarSign
 } from "lucide-react";
+import { Skeleton } from "./skeleton";
 import { motion } from "framer-motion";
 
+interface FinancialInsight {
+  summary: string;
+  trends: string[];
+  recommendations: string[];
+  forecast: {
+    nextMonthExpense: number;
+    confidence: number;
+    breakdown: {
+      category: string;
+      amount: number;
+      trend: "increasing" | "decreasing" | "stable";
+    }[];
+  };
+  riskAnalysis: {
+    level: "low" | "medium" | "high";
+    factors: string[];
+  };
+  seasonalPatterns: {
+    pattern: string;
+    confidence: number;
+    months: string[];
+  }[];
+  budgetOptimization: {
+    suggestions: string[];
+    potentialSavings: number;
+  };
+}
+
 interface InsightCard {
-  id: string;
   title: string;
   description: string;
   category: string;
-  value?: string;
   impact: 'positive' | 'negative' | 'neutral';
-  date: string;
+  value?: string;
   metrics?: { label: string; value: string }[];
 }
 
@@ -36,7 +59,7 @@ function InsightCard({ insight }: { insight: InsightCard }) {
   const TrendIcon = {
     positive: TrendingUp,
     negative: TrendingDown,
-    neutral: PieChart
+    neutral: CheckCircle
   }[insight.impact];
 
   return (
@@ -97,11 +120,6 @@ function InsightCard({ insight }: { insight: InsightCard }) {
               ))}
             </div>
           )}
-
-          <div className="mt-auto flex items-center text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 mr-1" />
-            <span>{insight.date}</span>
-          </div>
         </CardContent>
       </Card>
     </motion.div>
@@ -124,8 +142,8 @@ function InsightSection({ section }: { section: InsightSection }) {
             msOverflowStyle: 'none',
           }}
         >
-          {section.insights.map((insight) => (
-            <div key={insight.id} className="snap-start h-full">
+          {section.insights.map((insight, index) => (
+            <div key={index} className="snap-start h-full">
               <InsightCard insight={insight} />
             </div>
           ))}
@@ -135,103 +153,108 @@ function InsightSection({ section }: { section: InsightSection }) {
   );
 }
 
-const INSIGHTS_DATA: InsightSection[] = [
-  {
-    title: "Summary & Analysis",
-    description: "Key financial metrics and risk assessment",
-    insights: [
-      {
-        id: "1",
-        title: "Current Financial Status",
-        description: "Overall financial health and key performance indicators",
-        category: "Summary",
-        value: "Healthy",
-        impact: "positive",
-        date: "Today",
-        metrics: [
-          { label: "Revenue Growth", value: "+15%" },
-          { label: "Cost Control", value: "Optimal" }
-        ]
-      },
-      {
-        id: "2",
-        title: "Risk Assessment",
-        description: "Current risk level and contributing factors",
-        category: "Risk",
-        value: "Low Risk",
-        impact: "positive",
-        date: "Today",
-        metrics: [
-          { label: "Cash Flow", value: "Strong" },
-          { label: "Debt Ratio", value: "8.5%" }
-        ]
-      },
-      {
-        id: "3",
-        title: "Spending Patterns",
-        description: "Analysis of recent spending trends and behaviors",
-        category: "Trends",
-        value: "-5% MoM",
-        impact: "neutral",
-        date: "Today",
-        metrics: [
-          { label: "Top Category", value: "Travel" },
-          { label: "Avg Transaction", value: "$2,450" }
-        ]
-      }
-    ]
-  },
-  {
-    title: "Forecasting & Planning",
-    description: "Future projections and optimization opportunities",
-    insights: [
-      {
-        id: "4",
-        title: "Q2 2025 Forecast",
-        description: "Projected expenses and revenue for next quarter",
-        category: "Forecast",
-        value: "$125K Revenue",
-        impact: "positive",
-        date: "Today",
-        metrics: [
-          { label: "Confidence", value: "92%" },
-          { label: "Growth Rate", value: "+18%" }
-        ]
-      },
-      {
-        id: "5",
-        title: "Budget Optimization",
-        description: "Identified areas for cost reduction and efficiency",
-        category: "Optimization",
-        value: "$15K Potential Savings",
-        impact: "positive",
-        date: "Today",
-        metrics: [
-          { label: "Focus Area", value: "Venues" },
-          { label: "Timeline", value: "3 months" }
-        ]
-      },
-      {
-        id: "6",
-        title: "Seasonal Impact",
-        description: "Expected seasonal variations in costs and revenue",
-        category: "Seasonal",
-        value: "Q3 Peak Expected",
-        impact: "neutral",
-        date: "Today",
-        metrics: [
-          { label: "Peak Month", value: "August" },
-          { label: "Variance", value: "±12%" }
-        ]
-      }
-    ]
-  }
-];
-
 export function FinancialInsights() {
+  const queryClient = useQueryClient();
+  const { data: insights, isLoading } = useQuery<FinancialInsight>({
+    queryKey: ["/api/insights"],
+    staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
+  });
+
+  if (isLoading) {
+    return <Skeleton className="h-48" />;
+  }
+
+  if (!insights) {
+    return null;
+  }
+
+  const sections: InsightSection[] = [
+    {
+      title: "Summary & Current Status",
+      description: "Overview and key financial trends",
+      insights: [
+        {
+          title: "Financial Summary",
+          description: insights.summary,
+          category: "Overview",
+          impact: "neutral",
+          metrics: insights.trends.map(trend => ({
+            label: "Trend",
+            value: trend
+          }))
+        },
+        {
+          title: "Risk Analysis",
+          description: insights.riskAnalysis.factors[0],
+          category: "Risk",
+          impact: insights.riskAnalysis.level === "low" ? "positive" : 
+                 insights.riskAnalysis.level === "high" ? "negative" : "neutral",
+          value: `${insights.riskAnalysis.level.toUpperCase()} RISK`,
+          metrics: insights.riskAnalysis.factors.slice(1).map(factor => ({
+            label: "Factor",
+            value: factor
+          }))
+        }
+      ]
+    },
+    {
+      title: "Forecasting & Analysis",
+      description: "Future predictions and expense analysis",
+      insights: [
+        {
+          title: "Next Month Forecast",
+          description: "Predicted expenses for the upcoming month",
+          category: "Forecast",
+          impact: "neutral",
+          value: `$${insights.forecast.nextMonthExpense.toFixed(2)}`,
+          metrics: [
+            { label: "Confidence", value: `${Math.round(insights.forecast.confidence * 100)}%` },
+            ...insights.forecast.breakdown.map(item => ({
+              label: item.category,
+              value: `$${item.amount.toFixed(2)}`
+            }))
+          ]
+        },
+        ...insights.seasonalPatterns.map(pattern => ({
+          title: "Seasonal Pattern",
+          description: pattern.pattern,
+          category: "Seasonal",
+          impact: "neutral",
+          metrics: [
+            { label: "Confidence", value: `${Math.round(pattern.confidence * 100)}%` },
+            { label: "Months", value: pattern.months.join(", ") }
+          ]
+        }))
+      ]
+    },
+    {
+      title: "Optimization & Recommendations",
+      description: "Opportunities for improvement and cost savings",
+      insights: [
+        {
+          title: "Budget Optimization",
+          description: insights.budgetOptimization.suggestions[0],
+          category: "Savings",
+          impact: "positive",
+          value: `$${insights.budgetOptimization.potentialSavings.toFixed(2)} potential savings`,
+          metrics: insights.budgetOptimization.suggestions.slice(1).map(suggestion => ({
+            label: "Suggestion",
+            value: suggestion
+          }))
+        },
+        ...insights.recommendations.map(rec => ({
+          title: "Recommendation",
+          description: rec,
+          category: "Action",
+          impact: "positive"
+        }))
+      ]
+    }
+  ];
+
   return (
     <div className="space-y-8">
-      {INSIGHTS_DATA.map((section, index) => (
+      {sections.map((section, index) => (
         <InsightSection key={index} section={section} />
       ))}
     </div>

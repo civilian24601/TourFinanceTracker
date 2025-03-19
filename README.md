@@ -13,6 +13,7 @@ RoadBook is a comprehensive financial management platform designed specifically 
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
 - [Local Development Setup](#-local-development-setup)
+- [Migrating from Replit to Local Environment](#-migrating-from-replit-to-local-environment)
 - [Project Structure](#-project-structure)
 - [Environment Variables](#-environment-variables)
 - [Database Setup](#-database-setup)
@@ -176,6 +177,208 @@ The project uses OpenAI's latest GPT-4o model (released May 13, 2024) for financ
 - Budget optimization suggestions
 - Risk assessment
 ```
+
+## 🔄 Migrating from Replit to Local Environment
+
+### GitHub Repository Setup
+
+1. **Initialize Git and Create Repository**
+   ```bash
+   # In Replit
+   git init
+   git add .
+   git commit -m "Initial commit"
+   ```
+
+2. **Create GitHub Repository**
+   - Go to GitHub and create a new repository
+   - Don't initialize with README, license, or .gitignore
+   - Copy the repository URL
+
+3. **Link and Push to GitHub**
+   ```bash
+   git remote add origin <your-repository-url>
+   git branch -M main
+   git push -u origin main
+   ```
+
+4. **Clone to Local Environment**
+   ```bash
+   # In your local terminal
+   git clone <your-repository-url>
+   cd roadbook
+   ```
+
+### Post-Migration Steps
+
+1. **Environment Setup**
+   - Copy `.env.example` to `.env`
+   - Update environment variables with your local configuration
+   - Set up PostgreSQL connection string for local database
+
+2. **Database Migration**
+   ```bash
+   npm run db:push
+   ```
+
+3. **Verify Installation**
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+4. **Test Functionality**
+   - Verify database connection
+   - Test OpenAI integration
+   - Check authentication flow
+   - Confirm API endpoints
+
+### Common Migration Issues
+
+1. **Database Connection**
+   - Ensure PostgreSQL is running locally
+   - Verify DATABASE_URL format matches your local setup
+   - Check database user permissions
+
+2. **Environment Variables**
+   - Update OpenAI API key
+   - Generate new SESSION_SECRET
+   - Adjust any Replit-specific configurations
+
+3. **Development Server**
+   - Default port is 3000
+   - Update if conflicts with other local services
+   - Check for proper proxy settings in vite.config.ts
+
+For any issues during migration, please refer to the troubleshooting section or open an issue on GitHub.
+
+### Important Notes
+
+1. **Dependencies**
+   - All project dependencies are listed in `package.json`
+   - Some packages may need to be installed globally:
+     ```bash
+     npm install -g typescript ts-node drizzle-kit
+     ```
+
+2. **TypeScript Configuration**
+   - Ensure your Cursor editor recognizes the TypeScript configuration
+   - Path aliases (@/ and @shared/) should work automatically
+   - If not, verify the tsconfig.json settings match the provided configuration
+
+3. **Database Backup (Optional)**
+   Before migrating, you may want to backup your Replit database:
+   ```bash
+   # Export your database schema
+   npm run db:push -- --dry-run > schema_backup.sql
+
+   # For data migration, use Drizzle Kit
+   npm run db:studio # This opens a UI where you can export data
+   ```
+
+4. **Local Development Benefits**
+   - Faster development environment
+   - Better debugging capabilities
+   - Full access to database management tools
+   - Ability to use local Git workflows
+   - Custom environment configurations
+
+5. **Project Structure Preservation**
+   The migration process preserves:
+   - All source code and components
+   - Database schema and relationships
+   - Environment configurations
+   - Git history and branches
+   - Development scripts and tools
+
+For additional assistance or questions about the migration process, please open an issue on the GitHub repository.
+
+
+## 🔧 Migration Troubleshooting Guide
+
+### Pre-Migration Checklist
+1. **Version Control**
+   - Ensure all changes are committed
+   - Check for any untracked files: `git status`
+   - Verify remote is set correctly: `git remote -v`
+
+2. **Dependencies**
+   - Verify all dependencies are in package.json
+   - Check for any globally installed packages
+   - Note any Replit-specific dependencies
+
+3. **Environment**
+   - Copy all environment variables
+   - Note any Replit-specific paths or configurations
+   - Document any custom scripts or commands
+
+### Common Migration Issues
+
+1. **Git Issues**
+   ```bash
+   # If repository already exists
+   git remote remove origin
+   git remote add origin <new-repo-url>
+
+   # If push is rejected
+   git pull origin main --rebase
+   git push origin main
+   ```
+
+2. **Package Installation**
+   ```bash
+   # Clear npm cache if needed
+   npm cache clean --force
+
+   # Reinstall dependencies
+   rm -rf node_modules
+   npm install
+   ```
+
+3. **Database Connection**
+   - Test connection: `npm run db:studio`
+   - Check PostgreSQL service status
+   - Verify port availability
+   - Ensure proper user permissions
+
+4. **Environment Variables**
+   - Compare .env with .env.example
+   - Check for missing variables
+   - Verify correct format for local paths
+   - Update any Replit-specific URLs
+
+5. **Development Server**
+   ```bash
+   # If port 3000 is in use
+   PORT=3001 npm run dev
+
+   # If build fails
+   npm run build -- --clean
+   npm run dev
+   ```
+
+### Post-Migration Verification
+
+1. **Functionality Check**
+   - Test authentication flow
+   - Verify database operations
+   - Check OpenAI integration
+   - Test file uploads/downloads
+   - Verify all API endpoints
+
+2. **Performance Check**
+   - Compare load times
+   - Check memory usage
+   - Verify database query speed
+   - Test concurrent operations
+
+3. **Security Check**
+   - Verify SSL/TLS settings
+   - Check CORS configuration
+   - Test rate limiting
+   - Verify session management
+
+For additional assistance, please open an issue on GitHub or refer to the project documentation.
 
 ## 📁 Project Architecture
 
@@ -433,7 +636,7 @@ interface InsightResponse {
 3. **Testing**
    - Jest for unit tests
    - React Testing Library for components
-   - Run tests: `npm test`
+   - Run tests: `npm run test`
 
 4. **Commit Guidelines**
    - Use conventional commits
@@ -449,12 +652,14 @@ interface InsightResponse {
 ## 🚀 Roadmap
 
 ### Current Focus
+
 - ✅ Core expense tracking
 - ✅ Tour management
 - ✅ Basic insights
 - ✅ Mobile optimization
 
 ### Upcoming Features
+
 - 🎯 Advanced AI insights and forecasting
 - 📊 Export functionality for accounting
 - 📱 Interactive expense trend visualization

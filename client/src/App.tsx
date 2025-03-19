@@ -8,6 +8,9 @@ import HomePage from "@/pages/home-page";
 import ExpensePage from "@/pages/expense-page";
 import ToursPage from "@/pages/tours-page";
 import TourDetailPage from "@/pages/tour-detail-page";
+import ExpensesPage from "@/pages/expenses-page";
+import InsightsPage from "@/pages/insights-page";
+import LearnPage from "@/pages/learn-page";
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
 
@@ -18,6 +21,9 @@ function Router() {
       <ProtectedRoute path="/expense" component={ExpensePage} />
       <ProtectedRoute path="/tours" component={ToursPage} />
       <ProtectedRoute path="/tours/:id" component={TourDetailPage} />
+      <ProtectedRoute path="/expenses" component={ExpensesPage} />
+      <ProtectedRoute path="/insights" component={InsightsPage} />
+      <ProtectedRoute path="/learn" component={LearnPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

@@ -24,8 +24,9 @@ export default function HomePage() {
         className="container mx-auto py-6 px-4 space-y-6 pb-32"
       >
         {/* Welcome Message */}
-        <h1 className="text-3xl font-bold text-white">
-          Welcome back, {user?.username}!
+        <h1 className="text-3xl font-bold">
+          <span className="text-[#FF6200]">Welcome back, </span>
+          <span className="text-white">{user?.username}!</span>
         </h1>
 
         {/* Tours Section */}

@@ -1,13 +1,20 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   TrendingUp, 
-  TrendingDown, 
+  TrendingDown,
   AlertCircle,
   CheckCircle,
+  LineChart,
+  Calendar,
+  Target,
+  Lightbulb,
   DollarSign,
-  Calendar
+  ArrowUpRight,
+  Coins,
+  BarChart4,
+  Brain
 } from "lucide-react";
 import { Skeleton } from "./skeleton";
 import { motion } from "framer-motion";
@@ -46,8 +53,8 @@ interface InsightCard {
   category: string;
   impact: 'positive' | 'negative' | 'neutral';
   value?: string;
-  metrics?: { label: string; value: string }[];
-  size?: 'small' | 'medium' | 'large';
+  metrics?: { label: string; value: string; icon?: React.ReactNode }[];
+  icon?: React.ReactNode;
 }
 
 interface InsightSection {
@@ -57,17 +64,23 @@ interface InsightSection {
   insights: InsightCard[];
 }
 
-function InsightCard({ insight, size = 'medium' }: { insight: InsightCard; size?: 'small' | 'medium' | 'large' }) {
-  const TrendIcon = {
-    positive: TrendingUp,
-    negative: TrendingDown,
-    neutral: CheckCircle
-  }[insight.impact];
+const getActionIcon = (suggestion: string) => {
+  const lowercased = suggestion.toLowerCase();
+  if (lowercased.includes('venue') || lowercased.includes('hotel')) return '🏢';
+  if (lowercased.includes('marketing')) return '📢';
+  if (lowercased.includes('merchandise')) return '👕';
+  if (lowercased.includes('equipment')) return '🎸';
+  if (lowercased.includes('travel')) return '✈️';
+  if (lowercased.includes('food')) return '🍽️';
+  if (lowercased.includes('staff')) return '👥';
+  return '💡';
+};
 
+function InsightCard({ insight, size = 'medium' }: { insight: InsightCard; size?: 'small' | 'medium' | 'large' }) {
   const sizeClasses = {
-    small: "w-[280px] h-[200px]",
-    medium: "w-[350px] h-[280px]",
-    large: "w-[400px] h-[350px]"
+    small: "w-[280px] min-h-[200px]",
+    medium: "w-[320px] min-h-[300px]",
+    large: "w-[350px] min-h-[400px]"
   };
 
   return (
@@ -91,23 +104,19 @@ function InsightCard({ insight, size = 'medium' }: { insight: InsightCard; size?
             >
               {insight.category}
             </Badge>
-            <TrendIcon className={`h-5 w-5 
-              ${insight.impact === 'positive' ? 'text-green-500' : 
-                insight.impact === 'negative' ? 'text-red-500' : 
-                'text-blue-500'}`} 
-            />
+            {insight.icon}
           </div>
 
-          <h3 className="font-semibold text-lg text-white mb-2">
+          <h3 className="font-semibold text-lg text-white mb-2 flex items-center gap-2">
             {insight.title}
           </h3>
 
-          <p className="text-sm text-muted-foreground mb-3">
+          <p className="text-sm text-muted-foreground mb-4">
             {insight.description}
           </p>
 
           {insight.value && (
-            <div className="text-xl font-semibold mb-3"
+            <div className="text-xl font-semibold mb-4 flex items-center gap-2"
               style={{
                 color: insight.impact === 'positive' ? '#22c55e' : 
                        insight.impact === 'negative' ? '#ef4444' : 
@@ -119,10 +128,13 @@ function InsightCard({ insight, size = 'medium' }: { insight: InsightCard; size?
           )}
 
           {insight.metrics && (
-            <div className="mt-auto space-y-2 overflow-y-auto flex-grow">
+            <div className="mt-auto space-y-3">
               {insight.metrics.map((metric, index) => (
-                <div key={index} className="flex justify-between text-sm items-center py-1">
-                  <span className="text-muted-foreground">{metric.label}</span>
+                <div key={index} className="flex items-center justify-between text-sm py-1">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    {metric.icon}
+                    <span>{metric.label}</span>
+                  </div>
                   <span className="font-medium text-white">{metric.value}</span>
                 </div>
               ))}
@@ -162,7 +174,6 @@ function InsightSection({ section }: { section: InsightSection }) {
 }
 
 export function FinancialInsights() {
-  const queryClient = useQueryClient();
   const { data: insights, isLoading } = useQuery<FinancialInsight>({
     queryKey: ["/api/insights"],
     staleTime: 5 * 60 * 1000,
@@ -178,40 +189,49 @@ export function FinancialInsights() {
 
   const sections: InsightSection[] = [
     {
-      title: "Current Status",
-      description: "Overview and key metrics",
-      cardSize: 'small',
+      title: "Overview",
+      description: "Current financial status and trends",
+      cardSize: 'medium',
       insights: [
         {
           title: "Financial Summary",
           description: insights.summary,
           category: "Overview",
-          impact: "neutral"
+          impact: "neutral",
+          icon: <Brain className="h-5 w-5 text-blue-500" />
         },
         {
-          title: "Risk Level",
+          title: "Risk Assessment",
           description: insights.riskAnalysis.factors[0],
           category: "Risk",
           impact: insights.riskAnalysis.level === "low" ? "positive" : 
                  insights.riskAnalysis.level === "high" ? "negative" : "neutral",
           value: `${insights.riskAnalysis.level.toUpperCase()} RISK`,
-          metrics: [
-            { label: "Key Factor", value: insights.riskAnalysis.factors[1] || 'None' }
-          ]
+          icon: <AlertCircle className="h-5 w-5 text-yellow-500" />,
+          metrics: insights.riskAnalysis.factors.slice(1).map(factor => ({
+            label: factor,
+            icon: <Target className="h-4 w-4 text-muted-foreground" />,
+            value: ""
+          }))
         },
-        ...insights.trends.map(trend => ({
+        {
           title: "Trend Analysis",
-          description: trend,
+          description: "Key financial trends and patterns",
           category: "Trends",
-          impact: trend.includes("increase") ? "positive" : 
-                 trend.includes("decrease") ? "negative" : "neutral"
-        }))
+          impact: "neutral",
+          icon: <LineChart className="h-5 w-5 text-blue-500" />,
+          metrics: insights.trends.map(trend => ({
+            label: trend,
+            icon: <ArrowUpRight className="h-4 w-4 text-green-500" />,
+            value: ""
+          }))
+        }
       ]
     },
     {
       title: "Forecasting",
       description: "Future predictions and patterns",
-      cardSize: 'medium',
+      cardSize: 'large',
       insights: [
         {
           title: "Next Month's Forecast",
@@ -219,8 +239,10 @@ export function FinancialInsights() {
           category: "Forecast",
           impact: "neutral",
           value: `$${insights.forecast.nextMonthExpense.toFixed(2)}`,
+          icon: <BarChart4 className="h-5 w-5 text-blue-500" />,
           metrics: insights.forecast.breakdown.map(item => ({
             label: item.category,
+            icon: <Coins className="h-4 w-4 text-muted-foreground" />,
             value: `$${item.amount.toFixed(2)}`
           }))
         },
@@ -229,9 +251,18 @@ export function FinancialInsights() {
           description: pattern.pattern,
           category: "Seasonal",
           impact: "neutral",
+          icon: <Calendar className="h-5 w-5 text-blue-500" />,
           metrics: [
-            { label: "Confidence", value: `${Math.round(pattern.confidence * 100)}%` },
-            { label: "Peak Months", value: pattern.months.join(", ") }
+            { 
+              label: "Confidence",
+              icon: <Target className="h-4 w-4 text-muted-foreground" />,
+              value: `${Math.round(pattern.confidence * 100)}%`
+            },
+            {
+              label: "Peak Months",
+              icon: <Calendar className="h-4 w-4 text-muted-foreground" />,
+              value: pattern.months.join(", ")
+            }
           ]
         }))
       ]
@@ -247,17 +278,25 @@ export function FinancialInsights() {
           category: "Savings",
           impact: "positive",
           value: `$${insights.budgetOptimization.potentialSavings.toFixed(2)} potential savings`,
-          metrics: insights.budgetOptimization.suggestions.map((suggestion, i) => ({
-            label: `Suggestion ${i + 1}`,
-            value: suggestion
+          icon: <DollarSign className="h-5 w-5 text-green-500" />,
+          metrics: insights.budgetOptimization.suggestions.map(suggestion => ({
+            label: suggestion,
+            icon: <span className="text-lg">{getActionIcon(suggestion)}</span>,
+            value: ""
           }))
         },
-        ...insights.recommendations.map((rec, i) => ({
-          title: `Strategic Recommendation ${i + 1}`,
-          description: rec,
+        {
+          title: "Strategic Recommendations",
+          description: "AI-powered suggestions for improvement",
           category: "Action",
-          impact: "positive"
-        }))
+          impact: "positive",
+          icon: <Lightbulb className="h-5 w-5 text-yellow-500" />,
+          metrics: insights.recommendations.map(rec => ({
+            label: rec,
+            icon: <span className="text-lg">{getActionIcon(rec)}</span>,
+            value: ""
+          }))
+        }
       ]
     }
   ];

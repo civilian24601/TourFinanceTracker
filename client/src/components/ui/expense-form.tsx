@@ -187,11 +187,15 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                       <Plus className="h-4 w-4" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Create New Tour</DialogTitle>
                     </DialogHeader>
-                    <TourForm onSuccess={() => setTourDialogOpen(false)} />
+                    <TourForm onSuccess={() => {
+                      setTourDialogOpen(false);
+                      // Refresh tours list after adding
+                      queryClient.invalidateQueries({ queryKey: ["/api/tours"] });
+                    }} />
                   </DialogContent>
                 </Dialog>
               </div>

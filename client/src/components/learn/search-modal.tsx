@@ -40,7 +40,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "flex-1 transition-all duration-300",
-                  isInputFocused ? "scale-[0.8]" : "scale-100"
+                  isInputFocused ? "scale-[0.8] origin-left" : "scale-100"
                 )}>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -50,7 +50,6 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       className="pl-10 bg-[#2d2d30] border-none"
                       onFocus={() => setIsInputFocused(true)}
                       onBlur={() => setIsInputFocused(false)}
-                      autoFocus
                     />
                   </div>
                 </div>

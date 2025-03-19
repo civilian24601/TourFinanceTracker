@@ -1,17 +1,17 @@
 import { Header } from "@/components/ui/header";
 import { Navigation } from "@/components/ui/navigation";
 import { InsightSection } from "@/components/insights/insight-section";
+import { LoadingAnimation } from "@/components/ui/loading-animation";
 import { SAMPLE_INSIGHTS } from "@/types/insights";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function InsightsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate loading state for demo
+  // Reduced loading time and preload data
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
+    const timer = setTimeout(() => setIsLoading(false), 300);
     return () => clearTimeout(timer);
   }, []);
 
@@ -19,14 +19,14 @@ export default function InsightsPage() {
     return (
       <div className="min-h-screen bg-[#262629] flex items-center justify-center">
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{
-            duration: 0.5,
-            ease: [0.4, 0, 0.2, 1],
+            duration: 0.2,
+            ease: "easeOut",
           }}
         >
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <LoadingAnimation />
         </motion.div>
       </div>
     );

@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BarChart, 
@@ -12,8 +11,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
-import { Alert, AlertDescription } from "./alert";
+import { TrendingUp, TrendingDown, CheckCircle } from "lucide-react";
 import { Skeleton } from "./skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Expense } from "@shared/schema";
@@ -27,13 +25,19 @@ interface ExpenseTrend {
 }
 
 const CHART_COLORS = {
-  primary: "hsl(var(--primary))",
   increasing: "hsl(143, 71%, 48%)",
   decreasing: "hsl(346, 87%, 57%)",
   stable: "hsl(217, 91%, 60%)"
 };
 
 function calculateTrends(expenses: Expense[]): ExpenseTrend[] {
+  const monthlyTotals = expenses.reduce((acc, expense) => {
+    const month = new Date(expense.date).getMonth();
+    const amount = Number(expense.amount);
+    acc[month] = (acc[month] || 0) + amount;
+    return acc;
+  }, {} as Record<number, number>);
+
   const categoryTotals = expenses.reduce((acc, expense) => {
     const amount = Number(expense.amount);
     acc[expense.category] = (acc[expense.category] || 0) + amount;
@@ -42,24 +46,13 @@ function calculateTrends(expenses: Expense[]): ExpenseTrend[] {
 
   const total = Object.values(categoryTotals).reduce((sum, amount) => sum + amount, 0);
 
-  // Calculate month-over-month trends
-  const now = new Date();
-  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
-
-  const currentMonthExpenses = expenses.filter(e => new Date(e.createdAt) >= lastMonth);
-  const previousMonthExpenses = expenses.filter(e => {
-    const date = new Date(e.createdAt);
-    return date >= new Date(lastMonth.getFullYear(), lastMonth.getMonth() - 1) && date < lastMonth;
-  });
+  // Calculate category trends
+  const currentMonth = new Date().getMonth();
+  const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
 
   const getTrend = (category: string): "increasing" | "decreasing" | "stable" => {
-    const currentAmount = currentMonthExpenses
-      .filter(e => e.category === category)
-      .reduce((sum, e) => sum + Number(e.amount), 0);
-
-    const previousAmount = previousMonthExpenses
-      .filter(e => e.category === category)
-      .reduce((sum, e) => sum + Number(e.amount), 0);
+    const currentAmount = monthlyTotals[currentMonth] || 0;
+    const previousAmount = monthlyTotals[previousMonth] || 0;
 
     if (currentAmount > previousAmount * 1.1) return "increasing";
     if (currentAmount < previousAmount * 0.9) return "decreasing";
@@ -76,21 +69,24 @@ function calculateTrends(expenses: Expense[]): ExpenseTrend[] {
     .sort((a, b) => b.amount - a.amount);
 }
 
-export function ExpenseTrends({ tourId }: { tourId?: number }) {
+function TrendIcon({ trend }: { trend: "increasing" | "decreasing" | "stable" }) {
+  switch (trend) {
+    case "increasing":
+      return <TrendingUp className="h-4 w-4 text-green-500" />;
+    case "decreasing":
+      return <TrendingDown className="h-4 w-4 text-red-500" />;
+    default:
+      return <CheckCircle className="h-4 w-4 text-blue-500" />;
+  }
+}
+
+export function ExpenseTrends() {
   const [view, setView] = useState<"amount" | "percentage">("amount");
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const { data: expenses, isLoading: expensesLoading } = useQuery<Expense[]>({
-    queryKey: ["/api/expenses", { tourId }],
-    enabled: !!tourId,
+  const { data: expenses, isLoading } = useQuery<Expense[]>({
+    queryKey: ["/api/expenses"],
   });
-
-  const { data: insights, isLoading: insightsLoading } = useQuery<{ trends: string[] }>({
-    queryKey: ["/api/insights", { tourId }],
-    enabled: !!tourId,
-  });
-
-  const isLoading = expensesLoading || insightsLoading;
 
   if (isLoading) {
     return <Skeleton className="h-[400px]" />;
@@ -123,20 +119,27 @@ export function ExpenseTrends({ tourId }: { tourId?: number }) {
         </Tabs>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="h-[300px]">
+        {/* Chart */}
+        <div className="h-[250px] -mx-4">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart 
               data={trends}
-              margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
-              onMouseLeave={() => setHoveredCategory(null)}
+              margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+              onClick={(data) => {
+                if (data && data.activePayload) {
+                  setSelectedCategory(data.activePayload[0].payload.category);
+                }
+              }}
             >
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
               <XAxis 
                 dataKey="category" 
                 className="text-xs"
                 interval={0}
                 angle={-45}
                 textAnchor="end"
+                height={60}
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
               />
               <YAxis 
                 className="text-xs"
@@ -145,8 +148,10 @@ export function ExpenseTrends({ tourId }: { tourId?: number }) {
                     ? `${value}%` 
                     : `$${value}`
                 }
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
               />
               <Tooltip
+                cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const data = payload[0].payload as ExpenseTrend;
@@ -154,19 +159,16 @@ export function ExpenseTrends({ tourId }: { tourId?: number }) {
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-background border rounded-lg p-3 shadow-lg"
+                      className="bg-[#2d2d30] border border-border rounded-lg p-3 shadow-lg"
                     >
-                      <p className="font-medium">{data.category}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Amount: ${data.amount}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {data.percentage}% of total
-                      </p>
-                      <div className="flex items-center gap-1 mt-1">
-                        {data.trend === "increasing" && <TrendingUp className="w-4 h-4 text-green-500" />}
-                        {data.trend === "decreasing" && <TrendingDown className="w-4 h-4 text-red-500" />}
-                        <span className="text-sm capitalize">{data.trend}</span>
+                      <p className="font-medium text-white">{data.category}</p>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p>Amount: ${data.amount}</p>
+                        <p>{data.percentage}% of total</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <TrendIcon trend={data.trend} />
+                          <span className="capitalize">{data.trend}</span>
+                        </div>
                       </div>
                     </motion.div>
                   );
@@ -180,8 +182,7 @@ export function ExpenseTrends({ tourId }: { tourId?: number }) {
                   <Cell
                     key={`cell-${index}`}
                     fill={CHART_COLORS[entry.trend]}
-                    opacity={hoveredCategory === null || hoveredCategory === entry.category ? 1 : 0.3}
-                    onMouseEnter={() => setHoveredCategory(entry.category)}
+                    opacity={selectedCategory === null || selectedCategory === entry.category ? 1 : 0.4}
                   />
                 ))}
               </Bar>
@@ -189,28 +190,10 @@ export function ExpenseTrends({ tourId }: { tourId?: number }) {
           </ResponsiveContainer>
         </div>
 
-        <AnimatePresence mode="wait">
-          {insights?.trends && insights.trends.length > 0 && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-3"
-            >
-              <h3 className="font-medium">AI-Powered Insights</h3>
-              {insights.trends.map((trend, index) => (
-                <Alert key={index}>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{trend}</AlertDescription>
-                </Alert>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+        {/* Category List */}
         <motion.div 
           layout
-          className="grid gap-4 md:grid-cols-2"
+          className="space-y-2"
         >
           {trends.map(trend => (
             <motion.div
@@ -218,13 +201,23 @@ export function ExpenseTrends({ tourId }: { tourId?: number }) {
               layout
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.02 }}
-              className="flex justify-between items-center p-2 rounded-lg bg-muted"
+              className={`
+                p-3 rounded-lg transition-colors duration-200
+                ${selectedCategory === trend.category ? 'bg-[#2d2d30] shadow-lg' : 'bg-muted'}
+              `}
+              onClick={() => setSelectedCategory(
+                selectedCategory === trend.category ? null : trend.category
+              )}
             >
-              <span>{trend.category}</span>
-              <div className="space-x-2 text-sm">
-                <span className="text-muted-foreground">{trend.percentage}%</span>
-                <span className="font-medium">${trend.amount}</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendIcon trend={trend.trend} />
+                  <span className="font-medium">{trend.category}</span>
+                </div>
+                <div className="text-sm space-x-3">
+                  <span className="text-muted-foreground">{trend.percentage}%</span>
+                  <span className="font-medium">${trend.amount}</span>
+                </div>
               </div>
             </motion.div>
           ))}

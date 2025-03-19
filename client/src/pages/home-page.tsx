@@ -2,6 +2,7 @@ import { Header } from "@/components/ui/header";
 import { Navigation } from "@/components/ui/navigation";
 import { TourSection } from "@/components/ui/tour-section";
 import { FinancialInsights } from "@/components/ui/financial-insights";
+import { ExpenseTrends } from "@/components/ui/expense-trends";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import type { Tour } from "@shared/schema";
@@ -42,6 +43,15 @@ export default function HomePage() {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-white">Financial Insights</h2>
           <FinancialInsights />
+        </div>
+
+        {/* Expense Trends */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-white">Expense Analytics</h2>
+          <p className="text-muted-foreground">
+            Interactive visualization of your spending patterns
+          </p>
+          <ExpenseTrends />
         </div>
       </motion.main>
       <Navigation />

@@ -9,8 +9,8 @@ interface ArticleCardProps {
 
 export function ArticleCard({ article }: ArticleCardProps) {
   return (
-    <Card className="w-full hover:shadow-lg transition-shadow duration-200 cursor-pointer">
-      <div className="aspect-[16/9] relative bg-muted rounded-t-lg overflow-hidden">
+    <Card className="w-full hover:shadow-lg transition-shadow duration-200 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.3)] bg-[#2d2d30]">
+      <div className="aspect-[16/9] relative bg-[#2d2d30] rounded-t-lg overflow-hidden">
         {article.mainImage ? (
           <img
             src={article.mainImage}
@@ -18,8 +18,8 @@ export function ArticleCard({ article }: ArticleCardProps) {
             className="object-cover w-full h-full"
           />
         ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <span className="text-muted-foreground">Image placeholder</span>
+          <div className="w-full h-full bg-[#4a806b] bg-opacity-20 flex items-center justify-center">
+            <span className="text-[#4a806b]">Image placeholder</span>
           </div>
         )}
       </div>
@@ -28,7 +28,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
           <Badge variant="secondary" className="w-fit">
             {article.category}
           </Badge>
-          <h3 className="font-semibold text-lg leading-tight hover:text-primary">
+          <h3 className="font-semibold text-lg leading-tight text-white hover:text-primary">
             {article.title}
           </h3>
           <p className="text-sm text-muted-foreground">{article.author}</p>

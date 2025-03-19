@@ -54,10 +54,22 @@ export function setupAuth(app: Express) {
     name: 'tour-tracker.sid'
   };
 
-  app.set("trust proxy", 1);
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Debug middleware to log session and auth status
+  app.use((req, res, next) => {
+    console.log('Auth Debug:', {
+      path: req.path,
+      method: req.method,
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user?.id,
+      cookies: req.headers.cookie
+    });
+    next();
+  });
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {

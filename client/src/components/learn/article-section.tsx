@@ -14,9 +14,9 @@ export function ArticleSection({ section }: ArticleSectionProps) {
           <p className="text-muted-foreground">{section.description}</p>
         )}
       </div>
-      <div className="relative -mx-4">
+      <div className="relative">
         <div 
-          className="flex gap-4 overflow-x-auto px-4 pb-4 snap-x snap-mandatory no-scrollbar"
+          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar"
           style={{
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
@@ -26,7 +26,7 @@ export function ArticleSection({ section }: ArticleSectionProps) {
           {section.articles.map((article) => (
             <div 
               key={article.id} 
-              className="min-w-[280px] max-w-[280px] sm:min-w-[320px] sm:max-w-[320px] snap-start"
+              className="min-w-[280px] max-w-[280px] sm:min-w-[320px] sm:max-w-[320px] snap-start h-full"
             >
               <ArticleCard article={article} />
             </div>

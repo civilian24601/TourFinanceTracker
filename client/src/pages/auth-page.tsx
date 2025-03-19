@@ -37,18 +37,17 @@ export default function AuthPage() {
     },
   });
 
-  // Move the redirect after all hooks are initialized
   if (user) {
     setLocation("/");
     return null;
   }
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
+    <div className="min-h-screen grid md:grid-cols-2 bg-[#262629]">
       <div className="flex items-center justify-center p-6">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md bg-[#2d2d30] border-none">
           <CardHeader>
-            <CardTitle>Welcome to Tour Tracker</CardTitle>
+            <CardTitle className="text-white">Welcome to Tour Tracker</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
@@ -72,7 +71,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} className="bg-[#1e1e1e]" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -85,7 +84,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input type="password" {...field} />
+                            <Input type="password" {...field} className="bg-[#1e1e1e]" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -117,7 +116,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} className="bg-[#1e1e1e]" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -130,7 +129,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input type="password" {...field} />
+                            <Input type="password" {...field} className="bg-[#1e1e1e]" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -151,10 +150,10 @@ export default function AuthPage() {
         </Card>
       </div>
 
-      <div className="hidden md:flex flex-col justify-center p-12 bg-primary/5">
+      <div className="hidden md:flex flex-col justify-center p-12 bg-[#2d2d30]">
         <div className="space-y-6 text-center">
           <Music2 className="h-16 w-16 mx-auto text-primary" />
-          <h1 className="text-4xl font-bold tracking-tight">
+          <h1 className="text-4xl font-bold tracking-tight text-white">
             Tour Expense Tracker
           </h1>
           <p className="text-lg text-muted-foreground">

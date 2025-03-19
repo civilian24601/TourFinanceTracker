@@ -66,8 +66,16 @@ export function setupAuth(app: Express) {
       sessionID: req.sessionID,
       isAuthenticated: req.isAuthenticated(),
       user: req.user?.id,
-      cookies: req.headers.cookie
+      cookies: req.headers.cookie,
+      sessionData: req.session
     });
+
+    // Track outgoing cookies
+    const originalEnd = res.end;
+    res.end = function(...args) {
+      console.log('Response cookies:', res.getHeader('set-cookie'));
+      return originalEnd.apply(res, args);
+    };
     next();
   });
 

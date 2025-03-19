@@ -32,3 +32,15 @@
 .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
   @apply bg-muted;
 }
+
+/* Hide scrollbar but maintain functionality */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

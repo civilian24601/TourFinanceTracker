@@ -56,7 +56,6 @@ process.on('unhandledRejection', (reason, promise) => {
 
     const server = await registerRoutes(app);
 
-
     if (app.get("env") === "development") {
       await setupVite(app, server);
     } else {

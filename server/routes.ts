@@ -1,13 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertTourSchema, insertExpenseSchema } from "@shared/schema";
 import { predictExpenseCategory, generateFinancialInsights } from "./openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  setupAuth(app);
-
   // Tours
   app.post("/api/tours", async (req, res) => {
     console.log('POST /api/tours - Auth status:', req.isAuthenticated(), 'User:', req.user?.id);

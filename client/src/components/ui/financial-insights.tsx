@@ -1,8 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
 import { Skeleton } from "./skeleton";
-import { TrendingUp, AlertCircle, CheckCircle, TrendingDown, DollarSign, Calendar } from "lucide-react";
+import { TrendingUp, AlertCircle, CheckCircle, TrendingDown, DollarSign, Calendar, Clock } from "lucide-react";
 import { useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   BarChart,
   Bar,
@@ -13,194 +14,212 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-interface FinancialInsight {
-  summary: string;
-  trends: string[];
-  recommendations: string[];
-  forecast: {
-    nextMonthExpense: number;
-    confidence: number;
-    breakdown: {
-      category: string;
-      amount: number;
-      trend: "increasing" | "decreasing" | "stable";
-    }[];
-  };
-  riskAnalysis: {
-    level: "low" | "medium" | "high";
-    factors: string[];
-  };
-  seasonalPatterns: {
-    pattern: string;
-    confidence: number;
-    months: string[];
-  }[];
-  budgetOptimization: {
-    suggestions: string[];
-    potentialSavings: number;
-  };
+interface InsightCard {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  date: string;
+  readTime: string;
+  impact: 'positive' | 'negative' | 'neutral';
+  value?: string;
+  trend?: number;
 }
 
-export function FinancialInsights() {
-  const queryClient = useQueryClient();
-  const { data: insights, isLoading, error } = useQuery<FinancialInsight>({
-    queryKey: ["/api/insights"],
-    staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
-  });
+interface InsightSection {
+  title: string;
+  description?: string;
+  insights: InsightCard[];
+}
 
-  // Refetch insights when expenses change
-  useEffect(() => {
-    // Instead of subscribing to all cache changes, we'll only watch expenses
-    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (event?.query.queryKey[0] === '/api/expenses' && event.type === 'updated') {
-        // Only invalidate insights if expenses were actually updated
-        queryClient.invalidateQueries({ queryKey: ["/api/insights"] });
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [queryClient]);
-
-  if (isLoading) {
-    return <Skeleton className="h-48" />;
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Financial Insights</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-destructive">Failed to load insights</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!insights) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Financial Insights</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">No insights available yet. Add some expenses to get started!</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const getRiskColor = (level: string) => {
-    switch (level) {
-      case 'high': return 'text-red-500';
-      case 'medium': return 'text-yellow-500';
-      case 'low': return 'text-green-500';
-      default: return 'text-primary';
-    }
-  };
+function InsightCard({ insight }: { insight: InsightCard }) {
+  const TrendIcon = {
+    positive: TrendingUp,
+    negative: TrendingDown,
+    neutral: CheckCircle
+  }[insight.impact];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
-          Advanced Financial Insights
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <h3 className="font-medium mb-2">Summary</h3>
-          <p className="text-muted-foreground">{insights.summary}</p>
-        </div>
-
-        <div>
-          <h3 className="font-medium mb-4">Expense Forecast</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={insights.forecast.breakdown}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="category" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="amount" fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-2 flex justify-between text-sm">
-            <span>Next Month's Predicted Spending: ${insights.forecast.nextMonthExpense.toFixed(2)}</span>
-            <span>Confidence: {Math.round(insights.forecast.confidence * 100)}%</span>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="font-medium mb-2">Risk Analysis</h3>
-          <div className={`flex items-center gap-2 mb-2 ${getRiskColor(insights.riskAnalysis.level)}`}>
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium capitalize">
-              {insights.riskAnalysis.level} Risk Level
-            </span>
-          </div>
-          <ul className="space-y-2">
-            {insights.riskAnalysis.factors.map((factor, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm">
-                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>{factor}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <h3 className="font-medium mb-2">Seasonal Patterns</h3>
-          {insights.seasonalPatterns.map((pattern, i) => (
-            <div key={i} className="mb-4 last:mb-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Calendar className="h-4 w-4" />
-                <span className="font-medium">{pattern.pattern}</span>
-                <span className="text-sm text-muted-foreground">
-                  ({Math.round(pattern.confidence * 100)}% confidence)
-                </span>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={{ scale: 1.02 }}
+      className="h-full"
+    >
+      <Card className="w-[280px] h-[280px] hover:shadow-lg transition-shadow duration-200 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.3)] bg-[#2d2d30] rounded-lg overflow-hidden flex flex-col">
+        <CardHeader className="p-4 flex-grow">
+          <div className="flex flex-col h-full">
+            <div className="flex items-start justify-between mb-2">
+              <span className={`
+                px-2 py-1 rounded-full text-xs font-medium
+                ${insight.impact === 'positive' ? 'bg-green-500/10 text-green-500' : 
+                  insight.impact === 'negative' ? 'bg-red-500/10 text-red-500' : 
+                  'bg-gray-500/10 text-gray-500'}
+              `}>
+                {insight.category}
+              </span>
+              <TrendIcon className={`h-5 w-5 
+                ${insight.impact === 'positive' ? 'text-green-500' : 
+                  insight.impact === 'negative' ? 'text-red-500' : 
+                  'text-gray-500'}`} 
+              />
+            </div>
+            <h3 className="font-semibold text-lg leading-tight text-white hover:text-primary line-clamp-2 mb-2">
+              {insight.title}
+            </h3>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+              {insight.description}
+            </p>
+            {insight.value && (
+              <div className="text-xl font-semibold mb-2"
+                style={{
+                  color: insight.impact === 'positive' ? '#22c55e' : 
+                         insight.impact === 'negative' ? '#ef4444' : 
+                         '#6b7280'
+                }}
+              >
+                {insight.value}
               </div>
-              <p className="text-sm text-muted-foreground">
-                Affected months: {pattern.months.join(", ")}
-              </p>
+            )}
+            <div className="mt-auto">
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  <Calendar className="w-4 h-4 mr-1" />
+                  {insight.date}
+                </div>
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 mr-1" />
+                  {insight.readTime}
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+    </motion.div>
+  );
+}
+
+function InsightSection({ section }: { section: InsightSection }) {
+  return (
+    <div className="py-6">
+      <div className="mb-4">
+        <h3 className="text-xl font-semibold text-white">{section.title}</h3>
+        {section.description && (
+          <p className="text-muted-foreground">{section.description}</p>
+        )}
+      </div>
+      <div className="relative">
+        <div 
+          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar"
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          {section.insights.map((insight) => (
+            <div 
+              key={insight.id} 
+              className="snap-start h-full"
+            >
+              <InsightCard insight={insight} />
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
 
-        <div>
-          <h3 className="font-medium mb-2">Budget Optimization</h3>
-          <div className="flex items-center gap-2 mb-2 text-green-500">
-            <DollarSign className="h-4 w-4" />
-            <span>Potential Savings: ${insights.budgetOptimization.potentialSavings.toFixed(2)}</span>
-          </div>
-          <ul className="space-y-2">
-            {insights.budgetOptimization.suggestions.map((suggestion, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
-                <span>{suggestion}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+const SAMPLE_INSIGHTS: InsightSection[] = [
+  {
+    title: "Revenue Analysis",
+    description: "Key financial metrics and trends",
+    insights: [
+      {
+        id: "1",
+        title: "Merchandise Sales Growth",
+        description: "Your merch revenue has increased significantly compared to last tour",
+        category: "Revenue",
+        date: "Today",
+        readTime: "2 min",
+        impact: "positive",
+        value: "+25%"
+      },
+      {
+        id: "2",
+        title: "Ticket Sales Performance",
+        description: "Current tour ticket sales analysis and projections",
+        category: "Sales",
+        date: "Today",
+        readTime: "3 min",
+        impact: "positive",
+        value: "15% above target"
+      }
+    ]
+  },
+  {
+    title: "Cost Management",
+    description: "Expense analysis and optimization opportunities",
+    insights: [
+      {
+        id: "3",
+        title: "Venue Cost Analysis",
+        description: "Breakdown of venue costs and potential savings",
+        category: "Expenses",
+        date: "Today",
+        readTime: "4 min",
+        impact: "neutral",
+        value: "$2,500 avg/venue"
+      },
+      {
+        id: "4",
+        title: "Travel Expense Alert",
+        description: "Rising fuel costs affecting travel budget",
+        category: "Travel",
+        date: "Today",
+        readTime: "2 min",
+        impact: "negative",
+        value: "-10% margin"
+      }
+    ]
+  },
+  {
+    title: "Future Projections",
+    description: "AI-powered forecasts and recommendations",
+    insights: [
+      {
+        id: "5",
+        title: "Q3 Revenue Forecast",
+        description: "Projected earnings based on current trends",
+        category: "Forecast",
+        date: "Today",
+        readTime: "3 min",
+        impact: "positive",
+        value: "$125K expected"
+      },
+      {
+        id: "6",
+        title: "Cost Saving Opportunities",
+        description: "AI-identified areas for potential savings",
+        category: "Optimization",
+        date: "Today",
+        readTime: "4 min",
+        impact: "positive",
+        value: "$15K potential"
+      }
+    ]
+  }
+];
 
-        {insights.trends.length > 0 && (
-          <div>
-            <h3 className="font-medium mb-2">Spending Trends</h3>
-            <ul className="space-y-2">
-              {insights.trends.map((trend, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm">
-                  <TrendingUp className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
-                  <span>{trend}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+export function FinancialInsights() {
+  return (
+    <div className="space-y-8">
+      {SAMPLE_INSIGHTS.map((section, index) => (
+        <InsightSection key={index} section={section} />
+      ))}
+    </div>
   );
 }

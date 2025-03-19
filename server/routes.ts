@@ -7,10 +7,14 @@ import { predictExpenseCategory, generateFinancialInsights } from "./openai";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Tours
   app.post("/api/tours", async (req, res) => {
-    console.log('POST /api/tours - Auth status:', req.isAuthenticated(), 'User:', req.user?.id);
+    // Add minimal logging just for tour creation endpoint
+    console.log('POST /api/tours - Session:', {
+      authenticated: req.isAuthenticated(),
+      userId: req.user?.id,
+      sessionID: req.sessionID
+    });
 
     if (!req.isAuthenticated()) {
-      console.log('Unauthorized attempt to create tour');
       return res.status(401).json({ message: "Unauthorized" });
     }
 

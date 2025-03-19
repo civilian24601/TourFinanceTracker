@@ -37,28 +37,34 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
         >
           <div className="flex flex-col h-full">
             <div className="p-4 border-b border-[#363639]">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center">
                 <div className={cn(
-                  "flex-1 transition-all duration-300",
-                  isInputFocused ? "scale-[0.8] origin-left" : "scale-100"
+                  "flex-1 transition-all duration-200",
+                  isInputFocused ? "mr-3" : "mr-0"
                 )}>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
                       type="search"
                       placeholder="Try 'Best savings account'?"
-                      className="pl-10 bg-[#2d2d30] border-none"
+                      className="pl-10 bg-[#2d2d30] border-none w-full" // Added w-full for full width
                       onFocus={() => setIsInputFocused(true)}
                       onBlur={() => setIsInputFocused(false)}
                     />
                   </div>
                 </div>
-                <button
+                <motion.button
+                  initial={{ x: 50, opacity: 0 }}
+                  animate={{ 
+                    x: isInputFocused ? 0 : 50,
+                    opacity: isInputFocused ? 1 : 0 
+                  }}
+                  transition={{ duration: 0.2 }}
                   onClick={onClose}
-                  className="text-sm text-primary"
+                  className="text-sm text-primary whitespace-nowrap"
                 >
                   Cancel
-                </button>
+                </motion.button>
               </div>
             </div>
 

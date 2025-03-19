@@ -29,7 +29,7 @@ export default function LearnPage() {
         </div>
 
         {/* Article sections */}
-        <div className="space-y-8 mt-8">
+        <div className="space-y-8 mt-8 -mx-4 px-4">
           {SAMPLE_ARTICLES.map((section, index) => (
             <ArticleSection key={index} section={section} />
           ))}

@@ -7,11 +7,12 @@ import { predictExpenseCategory, generateFinancialInsights } from "./openai";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Tours
   app.post("/api/tours", async (req, res) => {
-    // Add minimal logging just for tour creation endpoint
-    console.log('POST /api/tours - Session:', {
-      authenticated: req.isAuthenticated(),
-      userId: req.user?.id,
-      sessionID: req.sessionID
+    // Test minimal logging
+    console.log('Tour creation attempt:', {
+      sessionID: req.sessionID,
+      cookie: req.headers.cookie,
+      reqPath: req.path,
+      auth: req.isAuthenticated()
     });
 
     if (!req.isAuthenticated()) {
@@ -28,7 +29,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...parsed.data,
         userId: req.user.id,
       });
-      console.log('Tour created successfully:', tour.id);
       res.status(201).json(tour);
     } catch (error) {
       console.error('Error creating tour:', error);

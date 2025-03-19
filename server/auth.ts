@@ -54,6 +54,7 @@ export function setupAuth(app: Express) {
     name: 'tour-tracker.sid'
   };
 
+  app.set("trust proxy", 1);
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());

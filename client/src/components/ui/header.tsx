@@ -16,7 +16,7 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-[#262629] backdrop-blur supports-[backdrop-filter]:bg-[#262629]/80">
+    <header className="sticky top-0 z-50 w-full border-b border-[#363639] bg-[#262629] backdrop-blur supports-[backdrop-filter]:bg-[#262629]/80">
       <div className="container flex h-14 max-w-screen-2xl items-center">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
@@ -32,11 +32,11 @@ export function Header() {
               transition={{ duration: 0.2 }}
               className="flex h-full flex-col"
             >
-              <SheetHeader className="border-b border-border/40 px-6 py-4">
+              <SheetHeader className="border-b border-[#363639] px-6 py-4">
                 <SheetTitle className="text-white">Menu</SheetTitle>
               </SheetHeader>
               <div className="flex-1" />
-              <div className="border-t border-border/40 p-6">
+              <div className="border-t border-[#363639] p-6">
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-white hover:text-primary"

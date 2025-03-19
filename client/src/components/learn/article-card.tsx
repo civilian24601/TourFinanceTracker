@@ -9,7 +9,7 @@ interface ArticleCardProps {
 
 export function ArticleCard({ article }: ArticleCardProps) {
   return (
-    <Card className="w-full h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.3)] bg-[#2d2d30] rounded-lg overflow-hidden">
+    <Card className="w-full h-[380px] hover:shadow-lg transition-shadow duration-200 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.3)] bg-[#2d2d30] rounded-lg overflow-hidden flex flex-col">
       <div className="aspect-[16/9] relative bg-[#2d2d30] overflow-hidden">
         {article.mainImage ? (
           <img
@@ -23,32 +23,30 @@ export function ArticleCard({ article }: ArticleCardProps) {
           </div>
         )}
       </div>
-      <CardHeader className="p-4">
-        <div className="flex flex-col space-y-2">
-          <Badge variant="secondary" className="w-fit">
+      <CardHeader className="p-4 flex-grow">
+        <div className="flex flex-col h-full">
+          <Badge variant="secondary" className="w-fit mb-2">
             {article.category}
           </Badge>
-          <h3 className="font-semibold text-lg leading-tight text-white hover:text-primary">
+          <h3 className="font-semibold text-lg leading-tight text-white hover:text-primary line-clamp-2 mb-2">
             {article.title}
           </h3>
-          <p className="text-sm text-muted-foreground">{article.author}</p>
+          <p className="text-sm text-muted-foreground mb-2">{article.author}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-auto">
+            {article.excerpt}
+          </p>
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-4">
+            <div className="flex items-center">
+              <CalendarDays className="w-4 h-4 mr-1" />
+              {article.date}
+            </div>
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-1" />
+              {article.readTime}
+            </div>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-          {article.excerpt}
-        </p>
-        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-          <div className="flex items-center">
-            <CalendarDays className="w-4 h-4 mr-1" />
-            {article.date}
-          </div>
-          <div className="flex items-center">
-            <Clock className="w-4 h-4 mr-1" />
-            {article.readTime}
-          </div>
-        </div>
-      </CardContent>
     </Card>
   );
 }

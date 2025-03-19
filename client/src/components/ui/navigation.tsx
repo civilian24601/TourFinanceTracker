@@ -24,7 +24,7 @@ export function Navigation() {
       </Link>
 
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#262629]/95 backdrop-blur supports-[backdrop-filter]:bg-[#262629]/60 border-t z-40">
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#262629]/95 backdrop-blur supports-[backdrop-filter]:bg-[#262629]/60 border-t border-[#363639] z-40">
         <div className="grid grid-cols-5 h-16 items-center px-4">
           <Link href="/">
             <a className={`flex flex-col items-center space-y-1 ${location === '/' ? 'text-[#FF6200]' : 'text-[#808080]'}`}>

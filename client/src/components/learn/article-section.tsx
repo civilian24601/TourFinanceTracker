@@ -15,10 +15,10 @@ export function ArticleSection({ section }: ArticleSectionProps) {
           <p className="text-muted-foreground">{section.description}</p>
         )}
       </div>
-      <ScrollArea className="w-full -mx-4 px-4">
-        <div className="flex space-x-4 pb-4">
+      <ScrollArea className="w-full overflow-x-auto" type="scroll" scrollHideDelay={150}>
+        <div className="flex space-x-4 pb-4 px-[1px]">
           {section.articles.map((article) => (
-            <div key={article.id} className="min-w-[350px] max-w-[350px]">
+            <div key={article.id} className="min-w-[350px] max-w-[350px] first:pl-0 last:pr-0">
               <ArticleCard article={article} />
             </div>
           ))}

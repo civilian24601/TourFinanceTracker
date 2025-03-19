@@ -9,8 +9,8 @@ interface ArticleCardProps {
 
 export function ArticleCard({ article }: ArticleCardProps) {
   return (
-    <Card className="w-full hover:shadow-lg transition-shadow duration-200 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.3)] bg-[#2d2d30]">
-      <div className="aspect-[16/9] relative bg-[#2d2d30] rounded-t-lg overflow-hidden">
+    <Card className="w-full hover:shadow-lg transition-shadow duration-200 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.3)] bg-[#2d2d30] rounded-lg overflow-hidden">
+      <div className="aspect-[16/9] relative bg-[#2d2d30] overflow-hidden">
         {article.mainImage ? (
           <img
             src={article.mainImage}

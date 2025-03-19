@@ -3,12 +3,10 @@ import { TourCard } from "./tour-card";
 import type { Tour } from "@shared/schema";
 
 interface TourSectionProps {
-  title: string;
-  description?: string;
   tours: Tour[];
 }
 
-export function TourSection({ title, description, tours }: TourSectionProps) {
+export function TourSection({ tours }: TourSectionProps) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -16,12 +14,6 @@ export function TourSection({ title, description, tours }: TourSectionProps) {
       transition={{ duration: 0.3 }}
       className="py-6"
     >
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold mb-2 text-white">{title}</h2>
-        {description && (
-          <p className="text-muted-foreground">{description}</p>
-        )}
-      </div>
       <div className="relative">
         <div 
           className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar"

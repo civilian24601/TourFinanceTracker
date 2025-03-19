@@ -24,7 +24,7 @@ export function TourCard({ tour }: TourCardProps) {
   const statusColors = {
     upcoming: "bg-blue-500/10 text-blue-500",
     active: "bg-green-500/10 text-green-500",
-    completed: "bg-gray-500/10 text-gray-500"
+    completed: "bg-yellow-500/10 text-yellow-500"
   };
 
   return (

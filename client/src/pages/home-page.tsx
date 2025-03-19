@@ -5,27 +5,12 @@ import { FinancialInsights } from "@/components/ui/financial-insights";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import type { Tour } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function HomePage() {
+  const { user } = useAuth();
   const { data: tours = [] } = useQuery<Tour[]>({
     queryKey: ["/api/tours"],
-  });
-
-  const today = new Date();
-  const activeTours = tours.filter(tour => {
-    const startDate = new Date(tour.startDate);
-    const endDate = new Date(tour.endDate);
-    return today >= startDate && today <= endDate;
-  });
-
-  const upcomingTours = tours.filter(tour => {
-    const startDate = new Date(tour.startDate);
-    return today < startDate;
-  });
-
-  const completedTours = tours.filter(tour => {
-    const endDate = new Date(tour.endDate);
-    return today > endDate;
   });
 
   return (
@@ -38,28 +23,19 @@ export default function HomePage() {
         transition={{ duration: 0.2 }}
         className="container mx-auto py-6 px-4 space-y-6 pb-32"
       >
-        {/* Tour Sections */}
-        {activeTours.length > 0 && (
-          <TourSection
-            title="Active Tours"
-            description="Currently running tours"
-            tours={activeTours}
-          />
-        )}
-        {upcomingTours.length > 0 && (
-          <TourSection
-            title="Upcoming Tours"
-            description="Tours scheduled for the future"
-            tours={upcomingTours}
-          />
-        )}
-        {completedTours.length > 0 && (
-          <TourSection
-            title="Past Tours"
-            description="Completed tour history"
-            tours={completedTours}
-          />
-        )}
+        {/* Welcome Message */}
+        <h1 className="text-3xl font-bold text-white">
+          Welcome back, {user?.username}!
+        </h1>
+
+        {/* Tours Section */}
+        <div className="space-y-2">
+          <h2 className="text-2xl font-semibold text-white">Tours</h2>
+          <p className="text-muted-foreground">
+            Currently running, scheduled and completed tour history at a glance
+          </p>
+          <TourSection tours={tours} />
+        </div>
 
         {/* Financial Insights */}
         <div className="space-y-4">

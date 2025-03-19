@@ -10,18 +10,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Tours
   app.post("/api/tours", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    console.log('POST /api/tours - Auth status:', req.isAuthenticated(), 'User:', req.user?.id);
+
+    if (!req.isAuthenticated()) {
+      console.log('Unauthorized attempt to create tour');
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
     const parsed = insertTourSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json(parsed.error);
     }
 
-    const tour = await storage.createTour({
-      ...parsed.data,
-      userId: req.user.id,
-    });
-    res.status(201).json(tour);
+    try {
+      const tour = await storage.createTour({
+        ...parsed.data,
+        userId: req.user.id,
+      });
+      console.log('Tour created successfully:', tour.id);
+      res.status(201).json(tour);
+    } catch (error) {
+      console.error('Error creating tour:', error);
+      res.status(500).json({ message: "Failed to create tour" });
+    }
   });
 
   app.get("/api/tours", async (req, res) => {
@@ -77,29 +88,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Expenses
   app.post("/api/expenses", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    console.log('POST /api/expenses - Auth status:', req.isAuthenticated(), 'User:', req.user?.id);
+
+    if (!req.isAuthenticated()) {
+      console.log('Unauthorized attempt to create expense');
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
     const parsed = insertExpenseSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json(parsed.error);
     }
 
-    if (parsed.data.description) {
-      const prediction = await predictExpenseCategory(
-        parsed.data.description,
-        Number(parsed.data.amount)
-      );
+    try {
+      if (parsed.data.description) {
+        const prediction = await predictExpenseCategory(
+          parsed.data.description,
+          Number(parsed.data.amount)
+        );
 
-      if (prediction.confidence > 0.8) {
-        parsed.data.category = prediction.category;
+        if (prediction.confidence > 0.8) {
+          parsed.data.category = prediction.category;
+        }
       }
-    }
 
-    const expense = await storage.createExpense({
-      ...parsed.data,
-      userId: req.user.id,
-    });
-    res.status(201).json(expense);
+      const expense = await storage.createExpense({
+        ...parsed.data,
+        userId: req.user.id,
+      });
+      console.log('Expense created successfully:', expense.id);
+      res.status(201).json(expense);
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      res.status(500).json({ message: "Failed to create expense" });
+    }
   });
 
   app.get("/api/expenses", async (req, res) => {

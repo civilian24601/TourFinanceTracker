@@ -21,17 +21,19 @@ function Router() {
 
   return (
     <AnimatePresence mode="wait">
-      <Switch key={location}>
-        <Route path="/auth" component={AuthPage} />
-        <ProtectedRoute path="/" component={HomePage} />
-        <ProtectedRoute path="/expense" component={ExpensePage} />
-        <ProtectedRoute path="/tours" component={ToursPage} />
-        <ProtectedRoute path="/tours/:id" component={TourDetailPage} />
-        <ProtectedRoute path="/expenses" component={ExpensesPage} />
-        <ProtectedRoute path="/insights" component={InsightsPage} />
-        <ProtectedRoute path="/learn" component={LearnPage} />
-        <Route component={NotFound} />
-      </Switch>
+      <PageTransition key={location}>
+        <Switch>
+          <Route path="/auth" component={AuthPage} />
+          <ProtectedRoute path="/" component={HomePage} />
+          <ProtectedRoute path="/expense" component={ExpensePage} />
+          <ProtectedRoute path="/tours" component={ToursPage} />
+          <ProtectedRoute path="/tours/:id" component={TourDetailPage} />
+          <ProtectedRoute path="/expenses" component={ExpensesPage} />
+          <ProtectedRoute path="/insights" component={InsightsPage} />
+          <ProtectedRoute path="/learn" component={LearnPage} />
+          <Route path="/:rest*" component={NotFound} />
+        </Switch>
+      </PageTransition>
     </AnimatePresence>
   );
 }

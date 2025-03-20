@@ -22,42 +22,14 @@ function Router() {
   return (
     <AnimatePresence mode="wait">
       <Switch key={location}>
-        <Route path="/">
-          <PageTransition>
-            <ProtectedRoute path="/" component={HomePage} />
-          </PageTransition>
-        </Route>
-        <Route path="/expense">
-          <PageTransition>
-            <ProtectedRoute path="/expense" component={ExpensePage} />
-          </PageTransition>
-        </Route>
-        <Route path="/tours">
-          <PageTransition>
-            <ProtectedRoute path="/tours" component={ToursPage} />
-          </PageTransition>
-        </Route>
-        <Route path="/tours/:id">
-          <PageTransition>
-            <ProtectedRoute path="/tours/:id" component={TourDetailPage} />
-          </PageTransition>
-        </Route>
-        <Route path="/expenses">
-          <PageTransition>
-            <ProtectedRoute path="/expenses" component={ExpensesPage} />
-          </PageTransition>
-        </Route>
-        <Route path="/insights">
-          <PageTransition>
-            <ProtectedRoute path="/insights" component={InsightsPage} />
-          </PageTransition>
-        </Route>
-        <Route path="/learn">
-          <PageTransition>
-            <ProtectedRoute path="/learn" component={LearnPage} />
-          </PageTransition>
-        </Route>
         <Route path="/auth" component={AuthPage} />
+        <ProtectedRoute path="/" component={HomePage} />
+        <ProtectedRoute path="/expense" component={ExpensePage} />
+        <ProtectedRoute path="/tours" component={ToursPage} />
+        <ProtectedRoute path="/tours/:id" component={TourDetailPage} />
+        <ProtectedRoute path="/expenses" component={ExpensesPage} />
+        <ProtectedRoute path="/insights" component={InsightsPage} />
+        <ProtectedRoute path="/learn" component={LearnPage} />
         <Route component={NotFound} />
       </Switch>
     </AnimatePresence>

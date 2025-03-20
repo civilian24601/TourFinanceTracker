@@ -38,6 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Invalidate all queries to ensure fresh data for the new user
+      queryClient.invalidateQueries();
     },
     onError: (error: Error) => {
       toast({
@@ -55,6 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Invalidate all queries to ensure fresh data for the new user
+      queryClient.invalidateQueries();
     },
     onError: (error: Error) => {
       toast({
@@ -70,9 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
-      // Clear all queries from the cache to prevent data leakage between sessions
-      queryClient.clear();
+      // Reset user data
       queryClient.setQueryData(["/api/user"], null);
+      // Invalidate all queries to remove old user's data
+      queryClient.invalidateQueries();
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",

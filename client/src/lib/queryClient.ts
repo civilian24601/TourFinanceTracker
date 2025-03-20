@@ -61,6 +61,7 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
+      gcTime: 0, // Immediately garbage collect inactive queries
       retry: (failureCount, error) => {
         console.log(`Query retry attempt ${failureCount}:`, error);
         // Don't retry on 401 errors

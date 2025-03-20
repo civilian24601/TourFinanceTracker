@@ -38,8 +38,8 @@ export function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false,
-      maxAge: 24 * 60 * 60 * 1000,
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: 'lax',
       path: '/',
       httpOnly: true
@@ -47,6 +47,9 @@ export function setupAuth(app: Express) {
     store: new PostgresSessionStore({
       pool,
       createTableIfMissing: true,
+      tableName: 'session',
+      pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+      errorLog: console.error // Log session store errors
     })
   };
 
@@ -63,6 +66,7 @@ export function setupAuth(app: Express) {
         }
         return done(null, user);
       } catch (error) {
+        console.error('Login error:', error);
         return done(error);
       }
     }),
@@ -76,10 +80,12 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       if (!user) {
+        console.error(`User not found for id: ${id}`);
         return done(null, false);
       }
       done(null, user);
     } catch (error) {
+      console.error('Deserialize error:', error);
       done(error);
     }
   });
@@ -98,26 +104,35 @@ export function setupAuth(app: Express) {
 
       req.login(user, (err) => {
         if (err) return next(err);
+        console.log('User registered and logged in:', user.id);
         res.status(201).json(user);
       });
     } catch (error) {
+      console.error('Registration error:', error);
       next(error);
     }
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    console.log('User logged in:', req.user?.id);
     res.status(200).json(req.user);
   });
 
   app.post("/api/logout", (req, res, next) => {
+    const userId = req.user?.id;
     req.logout((err) => {
       if (err) return next(err);
+      console.log('User logged out:', userId);
       res.sendStatus(200);
     });
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.isAuthenticated()) {
+      console.log('Unauthorized access attempt to /api/user');
+      return res.sendStatus(401);
+    }
+    console.log('User data retrieved:', req.user?.id);
     res.json(req.user);
   });
 }

@@ -38,8 +38,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tours", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const tours = await storage.getToursByUser(req.user.id);
-    res.json(tours);
+    try {
+      const tours = await storage.getToursByUser(req.user.id);
+      console.log('Tours fetched for user:', {
+        userId: req.user.id,
+        sessionID: req.sessionID,
+        toursCount: tours.length,
+        tours: tours
+      });
+      res.json(tours);
+    } catch (error) {
+      console.error('Error fetching tours:', error);
+      res.status(500).json({ message: "Failed to fetch tours" });
+    }
   });
 
   app.get("/api/tours/:id", async (req, res) => {
@@ -50,17 +61,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ message: "Invalid tour ID" });
     }
 
-    const tour = await storage.getTour(tourId);
-    if (!tour) {
-      return res.status(404).json({ message: "Tour not found" });
-    }
+    try {
+      const tour = await storage.getTour(tourId);
+      if (!tour) {
+        return res.status(404).json({ message: "Tour not found" });
+      }
 
-    // Only allow access to tours owned by the authenticated user
-    if (tour.userId !== req.user.id) {
-      return res.status(403).json({ message: "Access denied" });
-    }
+      // Only allow access to tours owned by the authenticated user
+      if (tour.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
 
-    res.json(tour);
+      console.log('Tour details fetched:', {
+        tourId,
+        userId: req.user.id,
+        sessionID: req.sessionID,
+        tour
+      });
+      res.json(tour);
+    } catch (error) {
+      console.error('Error fetching tour:', error);
+      res.status(500).json({ message: "Failed to fetch tour details" });
+    }
   });
 
   // Add DELETE tour endpoint
@@ -72,18 +94,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ message: "Invalid tour ID" });
     }
 
-    const tour = await storage.getTour(tourId);
-    if (!tour) {
-      return res.status(404).json({ message: "Tour not found" });
-    }
+    try {
+      const tour = await storage.getTour(tourId);
+      if (!tour) {
+        return res.status(404).json({ message: "Tour not found" });
+      }
 
-    // Only allow deletion of tours owned by the authenticated user
-    if (tour.userId !== req.user.id) {
-      return res.status(403).json({ message: "Access denied" });
-    }
+      // Only allow deletion of tours owned by the authenticated user
+      if (tour.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
 
-    await storage.deleteTour(tourId);
-    res.sendStatus(200);
+      await storage.deleteTour(tourId);
+      console.log('Tour deleted successfully:', { tourId, userId: req.user.id, sessionID: req.sessionID });
+      res.sendStatus(200);
+    } catch (error) {
+      console.error('Error deleting tour:', error);
+      res.status(500).json({ message: "Failed to delete tour" });
+    }
   });
 
 
@@ -126,22 +154,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/expenses", async (req, res) => {
+    console.log('GET /api/expenses - Auth status:', req.isAuthenticated(), 'User:', req.user?.id);
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const tourId = req.query.tourId;
-    let expenses;
+    try {
+      const tourId = req.query.tourId;
+      let expenses;
 
-    if (tourId && typeof tourId === 'string') {
-      expenses = await storage.getExpensesByTour(parseInt(tourId, 10));
-    } else {
-      expenses = await storage.getExpensesByUser(req.user.id);
+      if (tourId && typeof tourId === 'string') {
+        expenses = await storage.getExpensesByTour(parseInt(tourId, 10));
+        console.log('Expenses fetched for tour:', {
+          tourId,
+          count: expenses.length,
+          expenses
+        });
+      } else {
+        expenses = await storage.getExpensesByUser(req.user.id);
+        console.log('Expenses fetched for user:', {
+          userId: req.user.id,
+          count: expenses.length,
+          expenses
+        });
+      }
+
+      res.json(expenses);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+      res.status(500).json({ message: "Failed to fetch expenses" });
     }
-
-    res.json(expenses);
   });
 
   // AI Insights
   app.get("/api/insights", async (req, res) => {
+    console.log('GET /api/insights - Auth status:', req.isAuthenticated(), 'User:', req.user?.id);
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     const tourId = req.query.tourId;
@@ -156,10 +201,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         expenses = await storage.getExpensesByTour(tour.id);
         budget = Number(tour.budget);
+        console.log('Insights generated for tour:', {
+          tourId,
+          expenseCount: expenses.length,
+          budget
+        });
       } else {
         expenses = await storage.getExpensesByUser(req.user.id);
         const tours = await storage.getToursByUser(req.user.id);
         budget = tours.reduce((sum, tour) => sum + Number(tour.budget), 0);
+        console.log('Insights generated for user:', {
+          userId: req.user.id,
+          expenseCount: expenses.length,
+          tourCount: tours.length,
+          totalBudget: budget
+        });
       }
 
       const insights = await generateFinancialInsights(

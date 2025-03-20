@@ -3,6 +3,7 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = await res.text() || res.statusText;
+    console.error(`API Error: ${res.status} - ${text}`);
     throw new Error(`${res.status}: ${text}`);
   }
 }
@@ -12,6 +13,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  console.log(`Making ${method} request to ${url}`);
   const res = await fetch(url, {
     method,
     headers: {
@@ -31,6 +33,7 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    console.log(`Fetching data for queryKey:`, queryKey);
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",  // Essential for sending cookies
       headers: {
@@ -38,12 +41,17 @@ export const getQueryFn: <T>(options: {
       }
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    if (res.status === 401) {
+      console.log(`401 Unauthorized for queryKey:`, queryKey);
+      if (unauthorizedBehavior === "returnNull") {
+        return null;
+      }
     }
 
     await throwIfResNotOk(res);
-    return await res.json();
+    const data = await res.json();
+    console.log(`Data received for ${queryKey}:`, data);
+    return data;
   };
 
 export const queryClient = new QueryClient({
@@ -54,8 +62,10 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: Infinity,
       retry: (failureCount, error) => {
+        console.log(`Query retry attempt ${failureCount}:`, error);
         // Don't retry on 401 errors
         if (error instanceof Error && error.message.startsWith('401:')) {
+          console.log('Not retrying 401 error');
           return false;
         }
         return failureCount < 3;

@@ -12,17 +12,25 @@ export function PageTransition({ children }: { children: ReactNode }) {
     const currentIndex = pageOrder.indexOf(location);
     const lastLocation = sessionStorage.getItem("lastLocation");
     const lastIndex = lastLocation ? pageOrder.indexOf(lastLocation) : currentIndex;
-    
+
     setDirection(currentIndex > lastIndex ? 1 : -1);
     sessionStorage.setItem("lastLocation", location);
   }, [location]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 50 * direction }}
+      initial={{ opacity: 0.5, x: 20 * direction }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -50 * direction }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
+      exit={{ opacity: 0.5, x: -20 * direction }}
+      transition={{ 
+        duration: 0.15,
+        ease: "easeInOut"
+      }}
+      style={{
+        position: "relative",
+        backgroundColor: "var(--background)",
+        minHeight: "100vh"
+      }}
     >
       {children}
     </motion.div>
